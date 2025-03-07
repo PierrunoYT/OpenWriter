@@ -796,8 +796,11 @@ export async function generateTextDirectAPI(
 export async function getGenerationInfo(generationId: string) {
   try {
     const response = await axios.get(
-      `${OPENROUTER_API_URL}/generation?id=${generationId}`,
+      `${OPENROUTER_API_URL}/generation`,
       {
+        params: {
+          id: generationId
+        },
         headers: {
           'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
           'HTTP-Referer': 'https://openwriter.app',
