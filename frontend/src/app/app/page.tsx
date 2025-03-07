@@ -1,6 +1,20 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+
+// Define types for models
+interface Model {
+  id: string;
+  name: string;
+  description?: string;
+  pricing?: {
+    prompt: number;
+    completion: number;
+  };
+  context_length?: number;
+  features?: string[];
+  supportsStructured?: boolean;
+}
 
 export default function EditorPage() {
   const [content, setContent] = useState<string>('');
@@ -10,6 +24,8 @@ export default function EditorPage() {
   const [enableCaching, setEnableCaching] = useState<boolean>(true);
   const [useStructuredOutput, setUseStructuredOutput] = useState<boolean>(false);
   const [outputFormat, setOutputFormat] = useState<string>('text');
+  const [models, setModels] = useState<Model[]>([]);
+  const [loadingModels, setLoadingModels] = useState<boolean>(true);
 
   const handleGenerateContent = async () => {
     setIsLoading(true);
@@ -117,7 +133,43 @@ export default function EditorPage() {
     }
   };
 
-  const models = [
+  // Fetch models from the API
+  useEffect(() => {
+    const fetchModels = async () => {
+      setLoadingModels(true);
+      try {
+        const response = await fetch('http://localhost:3001/api/ai/models');
+        const data = await response.json();
+        
+        if (data.data && Array.isArray(data.data)) {
+          // Transform the models to include the supportsStructured property
+          const modelsWithSupport = data.data.map((model: any) => ({
+            ...model,
+            supportsStructured: 
+              // Check for features array to determine if the model supports structured output
+              model.features?.includes('json_object') || 
+              model.id.includes('gpt-4') || 
+              model.id.includes('firefunction')
+          }));
+          
+          setModels(modelsWithSupport);
+        } else {
+          console.error('Unexpected API response format for models:', data);
+          setModels(fallbackModels);
+        }
+      } catch (error) {
+        console.error('Error fetching models:', error);
+        setModels(fallbackModels);
+      } finally {
+        setLoadingModels(false);
+      }
+    };
+    
+    fetchModels();
+  }, []);
+  
+  // Fallback models in case the API fails
+  const fallbackModels = [
     { id: 'anthropic/claude-3-haiku', name: 'Claude 3 Haiku', supportsStructured: false },
     { id: 'anthropic/claude-3-sonnet', name: 'Claude 3 Sonnet', supportsStructured: false },
     { id: 'anthropic/claude-3-opus', name: 'Claude 3 Opus', supportsStructured: false },
@@ -171,24 +223,33 @@ export default function EditorPage() {
               <h2 className="text-xl font-semibold text-gray-800">Editor</h2>
               <div className="flex items-center space-x-2">
                 <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
-                  <select
-                    className="py-2 px-3 border border-gray-300 rounded-md text-sm"
-                    value={selectedModel}
-                    onChange={(e) => {
-                      setSelectedModel(e.target.value);
-                      // Check if the selected model supports structured output
-                      const model = models.find(m => m.id === e.target.value);
-                      if (model && !model.supportsStructured) {
-                        setUseStructuredOutput(false);
-                      }
-                    }}
-                  >
-                    {models.map((model) => (
-                      <option key={model.id} value={model.id}>
-                        {model.name}
-                      </option>
-                    ))}
-                  </select>
+                  {loadingModels ? (
+                    <select
+                      className="py-2 px-3 border border-gray-300 rounded-md text-sm"
+                      disabled
+                    >
+                      <option>Loading models...</option>
+                    </select>
+                  ) : (
+                    <select
+                      className="py-2 px-3 border border-gray-300 rounded-md text-sm"
+                      value={selectedModel}
+                      onChange={(e) => {
+                        setSelectedModel(e.target.value);
+                        // Check if the selected model supports structured output
+                        const model = models.find(m => m.id === e.target.value);
+                        if (model && !model.supportsStructured) {
+                          setUseStructuredOutput(false);
+                        }
+                      }}
+                    >
+                      {models.map((model) => (
+                        <option key={model.id} value={model.id}>
+                          {model.name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                   
                   <div className="flex items-center space-x-2">
                     <input
@@ -212,13 +273,13 @@ export default function EditorPage() {
                       id="structuredToggle"
                       checked={useStructuredOutput}
                       onChange={(e) => setUseStructuredOutput(e.target.checked)}
-                      disabled={!models.find(m => m.id === selectedModel)?.supportsStructured}
+                      disabled={loadingModels || !models.find(m => m.id === selectedModel)?.supportsStructured}
                       className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded 
                                 disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                     <label 
                       htmlFor="structuredToggle" 
-                      className={`text-sm ${!models.find(m => m.id === selectedModel)?.supportsStructured 
+                      className={`text-sm ${loadingModels || !models.find(m => m.id === selectedModel)?.supportsStructured 
                         ? 'text-gray-400' 
                         : 'text-gray-700'}`}
                     >
@@ -243,9 +304,9 @@ export default function EditorPage() {
                 
                 <button
                   onClick={handleGenerateContent}
-                  disabled={isLoading || !content.trim()}
+                  disabled={isLoading || !content.trim() || loadingModels}
                   className={`py-2 px-4 rounded bg-blue-600 text-white text-sm ${
-                    isLoading || !content.trim() ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'
+                    isLoading || !content.trim() || loadingModels ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'
                   }`}
                 >
                   {isLoading ? 'Generating...' : 'Generate'}
