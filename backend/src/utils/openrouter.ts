@@ -151,6 +151,7 @@ interface MaxPrice {
   image?: number;
 }
 
+// Options for standard chat completions endpoint
 interface OpenRouterOptions {
   // Basic parameters
   model?: string;
@@ -187,6 +188,30 @@ interface OpenRouterOptions {
   prediction?: Prediction;
   
   // OpenRouter-specific parameters
+  transforms?: string[];
+  models?: string[];
+  route?: 'fallback';
+  provider?: ProviderPreferences;
+  max_price?: MaxPrice;
+}
+
+// Options for the simpler text completions endpoint
+interface TextCompletionOptions {
+  model: string;
+  prompt: string;
+  temperature?: number;
+  max_tokens?: number;
+  stream?: boolean;
+  top_p?: number;
+  top_k?: number;
+  frequency_penalty?: number;
+  presence_penalty?: number;
+  repetition_penalty?: number;
+  seed?: number;
+  stop?: string | string[];
+  logprobs?: boolean;
+  top_logprobs?: number;
+  logit_bias?: { [key: number]: number };
   transforms?: string[];
   models?: string[];
   route?: 'fallback';
@@ -822,9 +847,308 @@ export async function getRateLimits(): Promise<RateLimitInfo> {
   }
 }
 
+/**
+ * Generate text using OpenRouter text completions API
+ */
+export async function generateTextCompletion(
+  options: TextCompletionOptions,
+  abortSignal?: AbortSignal
+) {
+  try {
+    // Prepare the API request
+    const requestParams: any = {
+      model: options.model,
+      prompt: options.prompt,
+      stream: options.stream || false,
+      extra_headers: {
+        'HTTP-Referer': 'https://openwriter.app',
+        'X-Title': 'OpenWriter',
+      },
+    };
+    
+    // Add all additional parameters if provided
+    if (options.temperature !== undefined) {
+      requestParams.temperature = options.temperature;
+    }
+    
+    if (options.max_tokens !== undefined) {
+      requestParams.max_tokens = options.max_tokens;
+    }
+    
+    if (options.top_p !== undefined) {
+      requestParams.top_p = options.top_p;
+    }
+    
+    if (options.top_k !== undefined) {
+      requestParams.top_k = options.top_k;
+    }
+    
+    if (options.frequency_penalty !== undefined) {
+      requestParams.frequency_penalty = options.frequency_penalty;
+    }
+    
+    if (options.presence_penalty !== undefined) {
+      requestParams.presence_penalty = options.presence_penalty;
+    }
+    
+    if (options.repetition_penalty !== undefined) {
+      requestParams.repetition_penalty = options.repetition_penalty;
+    }
+    
+    if (options.seed !== undefined) {
+      requestParams.seed = options.seed;
+    }
+    
+    if (options.stop) {
+      requestParams.stop = options.stop;
+    }
+    
+    if (options.logprobs !== undefined) {
+      requestParams.logprobs = options.logprobs;
+    }
+    
+    if (options.top_logprobs !== undefined) {
+      requestParams.top_logprobs = options.top_logprobs;
+    }
+    
+    if (options.logit_bias) {
+      requestParams.logit_bias = options.logit_bias;
+    }
+    
+    if (options.transforms && options.transforms.length > 0) {
+      requestParams.transforms = options.transforms;
+    }
+    
+    if (options.models && options.models.length > 0) {
+      requestParams.models = options.models;
+    }
+    
+    if (options.route) {
+      requestParams.route = options.route;
+    }
+    
+    if (options.provider) {
+      requestParams.provider = options.provider;
+    }
+    
+    if (options.max_price) {
+      requestParams.max_price = options.max_price;
+    }
+    
+    // Add abort signal if provided
+    if (abortSignal) {
+      requestParams.signal = abortSignal;
+    }
+    
+    // Make direct API call to the completions endpoint
+    const response = await axios.post(
+      `${OPENROUTER_API_URL}/completions`,
+      requestParams,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+          'HTTP-Referer': 'https://openwriter.app',
+          'X-Title': 'OpenWriter',
+        },
+        signal: abortSignal, // Support for AbortController
+      }
+    );
+    
+    return response.data;
+  } catch (error) {
+    console.error('Error calling OpenRouter text completions API:', error);
+    
+    // Handle specific errors related to rate limits and credits
+    if (axios.isAxiosError(error)) {
+      const status = error.response?.status;
+      const errorData = error.response?.data;
+      
+      if (errorData && errorData.error) {
+        const openRouterError = errorData.error;
+        const errorCode = openRouterError.code || status;
+        const errorMessage = openRouterError.message || 'Unknown error';
+        const errorMetadata = openRouterError.metadata;
+        
+        // Create custom error object with OpenRouter error details
+        const enhancedError: any = new Error(errorMessage);
+        enhancedError.code = errorCode;
+        enhancedError.status = status;
+        enhancedError.metadata = errorMetadata;
+        
+        // Handle specific error types
+        switch (errorCode) {
+          case 400:
+            enhancedError.type = 'bad_request';
+            break;
+          case 401:
+            enhancedError.type = 'authentication';
+            break;
+          case 402:
+            enhancedError.type = 'insufficient_credits';
+            break;
+          case 403:
+            // Check if this is a moderation error
+            if (errorMetadata && errorMetadata.reasons) {
+              enhancedError.type = 'moderation';
+              enhancedError.reasons = errorMetadata.reasons;
+              enhancedError.flagged_input = errorMetadata.flagged_input;
+              enhancedError.provider = errorMetadata.provider_name;
+            } else {
+              enhancedError.type = 'forbidden';
+            }
+            break;
+          case 408:
+            enhancedError.type = 'timeout';
+            break;
+          case 429:
+            enhancedError.type = 'rate_limit';
+            break;
+          case 502:
+            enhancedError.type = 'provider_error';
+            if (errorMetadata && errorMetadata.provider_name) {
+              enhancedError.provider = errorMetadata.provider_name;
+              enhancedError.raw_error = errorMetadata.raw;
+            }
+            break;
+          case 503:
+            enhancedError.type = 'no_provider_available';
+            break;
+          default:
+            enhancedError.type = 'unknown';
+        }
+        
+        throw enhancedError;
+      }
+    }
+    
+    // Rethrow the original error
+    throw error;
+  }
+}
+
+/**
+ * Generate text stream using OpenRouter text completions API
+ */
+export async function streamTextCompletion(
+  options: TextCompletionOptions,
+  res: any, // Express response object
+  abortSignal?: AbortSignal
+) {
+  try {
+    // Prepare the API request
+    const requestBody: any = {
+      model: options.model,
+      prompt: options.prompt,
+      stream: true,
+    };
+    
+    // Add all additional parameters
+    if (options.temperature !== undefined) {
+      requestBody.temperature = options.temperature;
+    }
+    
+    if (options.max_tokens !== undefined) {
+      requestBody.max_tokens = options.max_tokens;
+    }
+    
+    if (options.top_p !== undefined) {
+      requestBody.top_p = options.top_p;
+    }
+    
+    if (options.top_k !== undefined) {
+      requestBody.top_k = options.top_k;
+    }
+    
+    if (options.frequency_penalty !== undefined) {
+      requestBody.frequency_penalty = options.frequency_penalty;
+    }
+    
+    if (options.presence_penalty !== undefined) {
+      requestBody.presence_penalty = options.presence_penalty;
+    }
+    
+    if (options.repetition_penalty !== undefined) {
+      requestBody.repetition_penalty = options.repetition_penalty;
+    }
+    
+    if (options.seed !== undefined) {
+      requestBody.seed = options.seed;
+    }
+    
+    if (options.stop) {
+      requestBody.stop = options.stop;
+    }
+    
+    if (options.logprobs !== undefined) {
+      requestBody.logprobs = options.logprobs;
+    }
+    
+    if (options.top_logprobs !== undefined) {
+      requestBody.top_logprobs = options.top_logprobs;
+    }
+    
+    if (options.logit_bias) {
+      requestBody.logit_bias = options.logit_bias;
+    }
+    
+    if (options.transforms && options.transforms.length > 0) {
+      requestBody.transforms = options.transforms;
+    }
+    
+    if (options.models && options.models.length > 0) {
+      requestBody.models = options.models;
+    }
+    
+    if (options.route) {
+      requestBody.route = options.route;
+    }
+    
+    if (options.provider) {
+      requestBody.provider = options.provider;
+    }
+    
+    if (options.max_price) {
+      requestBody.max_price = options.max_price;
+    }
+    
+    // Set proper headers for streaming
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    
+    // Stream directly to response
+    const response = await axios.post(
+      `${OPENROUTER_API_URL}/completions`,
+      requestBody,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+          'HTTP-Referer': 'https://openwriter.app',
+          'X-Title': 'OpenWriter',
+        },
+        responseType: 'stream',
+        signal: abortSignal, // Support for AbortController
+      }
+    );
+    
+    response.data.pipe(res);
+    return new Promise((resolve, reject) => {
+      response.data.on('end', resolve);
+      response.data.on('error', reject);
+    });
+  } catch (error) {
+    console.error('Error streaming text completion:', error);
+    throw error;
+  }
+}
+
 export default {
   generateText,
   generateTextDirectAPI,
   getGenerationInfo,
   getRateLimits,
+  generateTextCompletion,
+  streamTextCompletion,
 };
