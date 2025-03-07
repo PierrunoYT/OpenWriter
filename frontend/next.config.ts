@@ -1,10 +1,24 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Proxy removed as requested
   reactStrictMode: true,
   devIndicators: {
-    buildActivityPosition: 'bottom-right',
-    buildActivity: false
+    position: 'bottom-right'
+  },
+  // Add CORS headers to API routes if needed
+  async headers() {
+    return [
+      {
+        // Apply to all routes
+        source: '/:path*',
+        headers: [
+          { key: 'Access-Control-Allow-Origin', value: '*' },
+          { key: 'Access-Control-Allow-Methods', value: 'GET, POST, PUT, DELETE, OPTIONS' },
+          { key: 'Access-Control-Allow-Headers', value: 'X-Requested-With, Content-Type, Accept, Authorization' },
+        ],
+      },
+    ];
   }
 };
 

@@ -260,7 +260,7 @@ export async function generateText(
   abortSignal?: AbortSignal
 ) {
   try {
-    const model = options.model || 'anthropic/claude-3-sonnet';
+    const model = options.model || 'anthropic/claude-3.7-sonnet';
     const enableCaching = options.enableCaching !== undefined ? options.enableCaching : true;
     
     // Prepare messages with caching if needed
@@ -540,7 +540,7 @@ export async function generateTextDirectAPI(
   axiosConfig: any = {}
 ) {
   try {
-    const model = options.model || 'anthropic/claude-3-sonnet';
+    const model = options.model || 'anthropic/claude-3.7-sonnet';
     const enableCaching = options.enableCaching !== undefined ? options.enableCaching : true;
     const isStreaming = options.stream || false;
     

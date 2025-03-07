@@ -30,9 +30,8 @@ export default function EditorPage() {
   const handleGenerateContent = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/ai/generate`, {
+      const response = await fetch(`${API_BASE_URL}/ai/generate`, {
         method: 'POST',
-        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -134,61 +133,37 @@ export default function EditorPage() {
     }
   };
 
-  // API base URL - use environment variable or fallback to localhost
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+  // API base URL - use proxy middleware
+  const API_BASE_URL = '/api/proxy';
   
-  // Fetch models from the API
+  // Use a fixed model instead of fetching from API
   useEffect(() => {
-    const fetchModels = async () => {
-      setLoadingModels(true);
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/ai/models`, {
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-        const data = await response.json();
-        
-        if (data.data && Array.isArray(data.data)) {
-          // Transform the models to include the supportsStructured property
-          const modelsWithSupport = data.data.map((model: any) => ({
-            ...model,
-            supportsStructured: 
-              // Check for features array to determine if the model supports structured output
-              model.features?.includes('json_object') || 
-              model.id.includes('gpt-4') || 
-              model.id.includes('firefunction')
-          }));
-          
-          setModels(modelsWithSupport);
-        } else {
-          console.error('Unexpected API response format for models:', data);
-          setModels(fallbackModels);
-        }
-      } catch (error) {
-        console.error('Error fetching models:', error);
-        setModels(fallbackModels);
-      } finally {
-        setLoadingModels(false);
-      }
-    };
+    // Set loading state
+    setLoadingModels(true);
     
-    fetchModels();
+    // Create a single model - Claude 3.7 Sonnet
+    const fixedModels = [
+      { 
+        id: 'anthropic/claude-3.7-sonnet', 
+        name: 'Claude 3.7 Sonnet', 
+        description: 'Latest Claude model with excellent capabilities',
+        context_length: 200000,
+        pricing: { prompt: 3.00, completion: 15.00 },
+        features: ['vision'],
+        supportsStructured: false
+      }
+    ];
+    
+    // Set the models directly
+    console.log('Using fixed Claude 3.7 Sonnet model instead of API fetch');
+    setModels(fixedModels);
+    setSelectedModel('anthropic/claude-3.7-sonnet');
+    setLoadingModels(false);
   }, []);
   
-  // Fallback models in case the API fails
-  const fallbackModels = [
-    { id: 'anthropic/claude-3-haiku', name: 'Claude 3 Haiku', supportsStructured: false },
-    { id: 'anthropic/claude-3-sonnet', name: 'Claude 3 Sonnet', supportsStructured: false },
-    { id: 'anthropic/claude-3-opus', name: 'Claude 3 Opus', supportsStructured: false },
-    { id: 'openai/gpt-3.5-turbo', name: 'GPT-3.5 Turbo', supportsStructured: false },
-    { id: 'openai/gpt-4o', name: 'GPT-4o', supportsStructured: true },
-    { id: 'google/gemini-pro', name: 'Gemini Pro', supportsStructured: false },
-    { id: 'meta-llama/llama-3-8b-instruct', name: 'Llama 3 8B', supportsStructured: false },
-    { id: 'meta-llama/llama-3-70b-instruct', name: 'Llama 3 70B', supportsStructured: false },
-    { id: 'fireworks/firefunction-v2', name: 'Firefunction V2', supportsStructured: true },
-  ];
+  // No fallback models
+  
+  // No need for fallback timeout since we're using a fixed model
   
   // Common output formats
   const outputFormats = [

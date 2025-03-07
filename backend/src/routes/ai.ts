@@ -605,9 +605,15 @@ router.get('/generation/:id', async (req, res) => {
 // Get available models
 router.get('/models', async (req, res) => {
   try {
+    // Debug log API key (masked for security)
+    const apiKey = process.env.OPENROUTER_API_KEY || 'not-set';
+    const maskedKey = apiKey.substring(0, 7) + '...' + apiKey.substring(apiKey.length - 5);
+    console.log(`Using OpenRouter API Key: ${maskedKey}`);
+    console.log(`Request headers:`, req.headers);
+    
     // Try to get the models from OpenRouter directly
-    // We could cache this to avoid hitting rate limits
     try {
+      console.log('Fetching models from OpenRouter API...');
       const response = await axios.get(
         'https://openrouter.ai/api/v1/models',
         {
@@ -619,10 +625,22 @@ router.get('/models', async (req, res) => {
         }
       );
       
+      console.log(`OpenRouter returned ${response.data?.data?.length || 0} models`);
       // Return the actual models from OpenRouter, which should already have the correct format
       return res.json(response.data);
     } catch (error) {
-      console.error('Failed to fetch models from OpenRouter, using fallback list:', error);
+      console.error('Failed to fetch models from OpenRouter, using fallback list:');
+      if (error.response) {
+        console.error('API Response Error:', {
+          status: error.response.status,
+          statusText: error.response.statusText,
+          data: error.response.data
+        });
+      } else if (error.request) {
+        console.error('No response received:', error.request);
+      } else {
+        console.error('Error setting up request:', error.message);
+      }
       
       // Create fallback model list that matches OpenRouter's format
       // Initialize with models we know are available
