@@ -32,12 +32,29 @@ interface Message {
   content: string | TextContent[];
 }
 
+interface JsonSchema {
+  name?: string;
+  strict?: boolean;
+  schema: {
+    type: string;
+    properties: Record<string, any>;
+    required?: string[];
+    additionalProperties?: boolean;
+  };
+}
+
+interface ResponseFormat {
+  type: 'json_schema' | string;
+  json_schema: JsonSchema;
+}
+
 interface OpenRouterOptions {
   model?: string;
   temperature?: number;
   max_tokens?: number;
   stream?: boolean;
   enableCaching?: boolean;
+  responseFormat?: ResponseFormat;
 }
 
 /**
@@ -86,7 +103,8 @@ export async function generateText(
     // Prepare messages with caching if needed
     const preparedMessages = prepareMessagesWithCaching(messages, model, enableCaching);
     
-    const completion = await openai.chat.completions.create({
+    // Prepare the API request
+    const requestParams: any = {
       model: model,
       messages: preparedMessages,
       temperature: options.temperature || 0.7,
@@ -96,7 +114,14 @@ export async function generateText(
         'HTTP-Referer': 'https://openwriter.app',
         'X-Title': 'OpenWriter',
       },
-    });
+    };
+    
+    // Add response_format if it's provided
+    if (options.responseFormat) {
+      requestParams.response_format = options.responseFormat;
+    }
+    
+    const completion = await openai.chat.completions.create(requestParams);
 
     // If response includes cache information, log it
     if (completion.usage?.prompt_tokens !== undefined && 
@@ -128,15 +153,23 @@ export async function generateTextDirectAPI(
     // Prepare messages with caching if needed
     const preparedMessages = prepareMessagesWithCaching(messages, model, enableCaching);
     
+    // Build request body
+    const requestBody: any = {
+      model: model,
+      messages: preparedMessages,
+      temperature: options.temperature || 0.7,
+      max_tokens: options.max_tokens || 1000,
+      stream: options.stream || false,
+    };
+    
+    // Add response_format if provided
+    if (options.responseFormat) {
+      requestBody.response_format = options.responseFormat;
+    }
+    
     const response = await axios.post(
       `${OPENROUTER_API_URL}/chat/completions`,
-      {
-        model: model,
-        messages: preparedMessages,
-        temperature: options.temperature || 0.7,
-        max_tokens: options.max_tokens || 1000,
-        stream: options.stream || false,
-      },
+      requestBody,
       {
         headers: {
           'Content-Type': 'application/json',

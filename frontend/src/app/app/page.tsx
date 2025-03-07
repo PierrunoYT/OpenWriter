@@ -8,6 +8,8 @@ export default function EditorPage() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [selectedModel, setSelectedModel] = useState<string>('anthropic/claude-3-haiku');
   const [enableCaching, setEnableCaching] = useState<boolean>(true);
+  const [useStructuredOutput, setUseStructuredOutput] = useState<boolean>(false);
+  const [outputFormat, setOutputFormat] = useState<string>('text');
 
   const handleGenerateContent = async () => {
     setIsLoading(true);
@@ -19,13 +21,51 @@ export default function EditorPage() {
         },
         body: JSON.stringify({
           messages: [
-            { role: 'system', content: 'You are a helpful writing assistant.' },
+            { 
+              role: 'system', 
+              content: useStructuredOutput 
+                ? `You are a helpful writing assistant. Format your response as ${outputFormat}.` 
+                : 'You are a helpful writing assistant.'
+            },
             { role: 'user', content }
           ],
           model: selectedModel,
           temperature: 0.7,
           max_tokens: 1000,
-          enableCaching: enableCaching
+          enableCaching: enableCaching,
+          responseFormat: useStructuredOutput && outputFormat === 'json' ? {
+            type: 'json_schema',
+            json_schema: {
+              name: 'content',
+              strict: true,
+              schema: {
+                type: 'object',
+                properties: {
+                  title: {
+                    type: 'string',
+                    description: 'A title for the content'
+                  },
+                  content: {
+                    type: 'string',
+                    description: 'The main text content'
+                  },
+                  summary: {
+                    type: 'string',
+                    description: 'A brief summary of the content'
+                  },
+                  keywords: {
+                    type: 'array',
+                    items: {
+                      type: 'string'
+                    },
+                    description: 'Keywords relevant to the content'
+                  }
+                },
+                required: ['content'],
+                additionalProperties: false
+              }
+            }
+          } : undefined
         }),
       });
 
@@ -34,7 +74,21 @@ export default function EditorPage() {
       // Handle both OpenAI SDK response format and direct API response format
       if (data.choices && data.choices.length > 0) {
         // Could be either format, check for object vs string content
-        const messageContent = data.choices[0].message?.content || data.choices[0].message;
+        let messageContent = data.choices[0].message?.content || data.choices[0].message;
+        
+        // For JSON responses, format them nicely
+        if (typeof messageContent === 'object') {
+          messageContent = JSON.stringify(messageContent, null, 2);
+        } else if (useStructuredOutput && outputFormat === 'json') {
+          // Try to parse it as JSON if we're expecting JSON
+          try {
+            const jsonObject = JSON.parse(messageContent);
+            messageContent = JSON.stringify(jsonObject, null, 2);
+          } catch (e) {
+            // Not valid JSON, leave as is
+          }
+        }
+        
         setAiResponse(messageContent);
         
         // Log caching info if available
@@ -64,14 +118,24 @@ export default function EditorPage() {
   };
 
   const models = [
-    { id: 'anthropic/claude-3-haiku', name: 'Claude 3 Haiku' },
-    { id: 'anthropic/claude-3-sonnet', name: 'Claude 3 Sonnet' },
-    { id: 'anthropic/claude-3-opus', name: 'Claude 3 Opus' },
-    { id: 'openai/gpt-3.5-turbo', name: 'GPT-3.5 Turbo' },
-    { id: 'openai/gpt-4o', name: 'GPT-4o' },
-    { id: 'google/gemini-pro', name: 'Gemini Pro' },
-    { id: 'meta-llama/llama-3-8b-instruct', name: 'Llama 3 8B' },
-    { id: 'meta-llama/llama-3-70b-instruct', name: 'Llama 3 70B' },
+    { id: 'anthropic/claude-3-haiku', name: 'Claude 3 Haiku', supportsStructured: false },
+    { id: 'anthropic/claude-3-sonnet', name: 'Claude 3 Sonnet', supportsStructured: false },
+    { id: 'anthropic/claude-3-opus', name: 'Claude 3 Opus', supportsStructured: false },
+    { id: 'openai/gpt-3.5-turbo', name: 'GPT-3.5 Turbo', supportsStructured: false },
+    { id: 'openai/gpt-4o', name: 'GPT-4o', supportsStructured: true },
+    { id: 'google/gemini-pro', name: 'Gemini Pro', supportsStructured: false },
+    { id: 'meta-llama/llama-3-8b-instruct', name: 'Llama 3 8B', supportsStructured: false },
+    { id: 'meta-llama/llama-3-70b-instruct', name: 'Llama 3 70B', supportsStructured: false },
+    { id: 'fireworks/firefunction-v2', name: 'Firefunction V2', supportsStructured: true },
+  ];
+  
+  // Common output formats
+  const outputFormats = [
+    { id: 'text', name: 'Text (Default)' },
+    { id: 'summary', name: 'Summary' },
+    { id: 'bullet-points', name: 'Bullet Points' },
+    { id: 'json', name: 'JSON' },
+    { id: 'markdown', name: 'Markdown' },
   ];
 
   return (
@@ -110,7 +174,14 @@ export default function EditorPage() {
                   <select
                     className="py-2 px-3 border border-gray-300 rounded-md text-sm"
                     value={selectedModel}
-                    onChange={(e) => setSelectedModel(e.target.value)}
+                    onChange={(e) => {
+                      setSelectedModel(e.target.value);
+                      // Check if the selected model supports structured output
+                      const model = models.find(m => m.id === e.target.value);
+                      if (model && !model.supportsStructured) {
+                        setUseStructuredOutput(false);
+                      }
+                    }}
                   >
                     {models.map((model) => (
                       <option key={model.id} value={model.id}>
@@ -131,6 +202,43 @@ export default function EditorPage() {
                       Enable caching
                     </label>
                   </div>
+                </div>
+                
+                {/* Structured Output Controls */}
+                <div className="flex flex-col space-y-2 mt-2">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="structuredToggle"
+                      checked={useStructuredOutput}
+                      onChange={(e) => setUseStructuredOutput(e.target.checked)}
+                      disabled={!models.find(m => m.id === selectedModel)?.supportsStructured}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded 
+                                disabled:opacity-50 disabled:cursor-not-allowed"
+                    />
+                    <label 
+                      htmlFor="structuredToggle" 
+                      className={`text-sm ${!models.find(m => m.id === selectedModel)?.supportsStructured 
+                        ? 'text-gray-400' 
+                        : 'text-gray-700'}`}
+                    >
+                      Use structured output
+                    </label>
+                  </div>
+                  
+                  {useStructuredOutput && (
+                    <select
+                      className="py-2 px-3 border border-gray-300 rounded-md text-sm"
+                      value={outputFormat}
+                      onChange={(e) => setOutputFormat(e.target.value)}
+                    >
+                      {outputFormats.map((format) => (
+                        <option key={format.id} value={format.id}>
+                          {format.name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                 </div>
                 
                 <button
@@ -165,11 +273,17 @@ export default function EditorPage() {
                 </div>
               ) : aiResponse ? (
                 <div className="prose max-w-none">
-                  {aiResponse.split('\n').map((paragraph, index) => (
-                    <p key={index} className="mb-4">
-                      {paragraph}
-                    </p>
-                  ))}
+                  {outputFormat === 'json' || aiResponse.startsWith('{') || aiResponse.startsWith('[') ? (
+                    <pre className="bg-gray-100 p-4 rounded overflow-auto">
+                      <code>{aiResponse}</code>
+                    </pre>
+                  ) : (
+                    aiResponse.split('\n').map((paragraph, index) => (
+                      <p key={index} className="mb-4">
+                        {paragraph}
+                      </p>
+                    ))
+                  )}
                 </div>
               ) : (
                 <div className="text-gray-400 h-full flex items-center justify-center">

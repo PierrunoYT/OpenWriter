@@ -5,11 +5,27 @@ const router = express.Router();
 
 router.post('/generate', async (req, res) => {
   try {
-    const { messages, model, temperature, max_tokens, stream, enableCaching } = req.body;
+    const { 
+      messages, 
+      model, 
+      temperature, 
+      max_tokens, 
+      stream, 
+      enableCaching,
+      responseFormat
+    } = req.body;
     
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       res.status(400).json({ error: 'Messages are required and must be an array' });
       return;
+    }
+    
+    // Validate responseFormat if provided
+    if (responseFormat && responseFormat.type === 'json_schema') {
+      if (!responseFormat.json_schema || !responseFormat.json_schema.schema) {
+        res.status(400).json({ error: 'Invalid responseFormat. Must include json_schema with a valid schema.' });
+        return;
+      }
     }
 
     // Try the OpenAI SDK approach first
@@ -19,7 +35,8 @@ router.post('/generate', async (req, res) => {
         temperature, 
         max_tokens,
         stream: false, // Not supporting streaming in the initial implementation
-        enableCaching: enableCaching !== false // Enable caching by default
+        enableCaching: enableCaching !== false, // Enable caching by default
+        responseFormat: responseFormat // Pass through the response format if provided
       });
       
       // Add a field to indicate caching was used
@@ -39,7 +56,8 @@ router.post('/generate', async (req, res) => {
         temperature, 
         max_tokens,
         stream: false,
-        enableCaching: enableCaching !== false
+        enableCaching: enableCaching !== false,
+        responseFormat: responseFormat // Pass through the response format
       });
       
       // Add a field to indicate caching was used
