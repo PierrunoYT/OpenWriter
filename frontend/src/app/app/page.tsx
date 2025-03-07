@@ -568,17 +568,21 @@ export default function EditorPage() {
             <span className="text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">
               OpenWriter
             </span>
-          </div>
-          <div className="flex items-center space-x-4">
-            <div className="hidden md:flex items-center space-x-2 bg-slate-100 dark:bg-slate-800 rounded-full px-3 py-1 text-sm text-slate-600 dark:text-slate-300">
+            
+            {/* OpenRouter connection status moved next to logo */}
+            <div className="hidden md:flex items-center space-x-2 bg-slate-100 dark:bg-slate-800 rounded-full px-3 py-1 text-xs text-slate-600 dark:text-slate-300">
               <span className="inline-block w-2 h-2 rounded-full bg-green-500"></span>
-              {loadingModels ? "Connecting..." : "Connected to OpenRouter"}
+              {loadingModels ? "Connecting..." : "OpenRouter"}
             </div>
+          </div>
+          
+          <div className="flex items-center space-x-3">
+            {/* GitHub icon with a better hover effect */}
             <a 
               href="https://github.com/yourhandle/openwriter" 
               target="_blank"
               rel="noopener noreferrer"
-              className="text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 flex items-center gap-2 text-sm"
+              className="p-2 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
               aria-label="View on GitHub"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
