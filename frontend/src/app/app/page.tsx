@@ -552,11 +552,11 @@ export default function EditorPage() {
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 text-slate-800 dark:text-slate-100">
       {/* Header */}
       <header className="sticky top-0 z-10 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-b border-slate-200 dark:border-slate-700 py-4 shadow-sm">
-        <div className="container mx-auto px-4 flex justify-between items-center">
-          <div className="flex items-center space-x-4">
+        <div className="w-full px-6 flex justify-between items-center">
+          <div className="flex items-center">
             <button 
               onClick={() => setShowSidebar(!showSidebar)}
-              className="p-2 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 rounded-md"
+              className="p-2 mr-4 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 rounded-md"
               aria-label={showSidebar ? "Hide sidebar" : "Show sidebar"}
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -565,7 +565,7 @@ export default function EditorPage() {
                 <line x1="3" y1="18" x2="21" y2="18"></line>
               </svg>
             </button>
-            <span className="text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">
+            <span className="text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 mr-4">
               OpenWriter
             </span>
             
@@ -576,7 +576,7 @@ export default function EditorPage() {
             </div>
           </div>
           
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center">
             {/* GitHub icon with a better hover effect */}
             <a 
               href="https://github.com/yourhandle/openwriter" 
