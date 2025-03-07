@@ -1,6 +1,12 @@
 # OpenWriter
 
-OpenWriter is an AI-powered writing assistant that helps you create better content faster. It leverages multiple AI models through OpenRouter integration.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+OpenWriter is an open-source AI-powered writing assistant that helps you create better content faster. It leverages multiple AI models through OpenRouter integration.
+
+## About
+
+OpenWriter aims to democratize access to AI writing tools by providing a free, open-source alternative to commercial offerings. By being open-source, it allows for community contributions, transparency, and customization to meet specific needs.
 
 ## Project Structure
 
@@ -84,6 +90,26 @@ The frontend will run on http://localhost:3000 by default.
   - SQLite (better-sqlite3)
   - OpenRouter API
 
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## Community
+
+- [GitHub Issues](https://github.com/yourhandle/openwriter/issues) - Bug reports, feature requests
+- [GitHub Discussions](https://github.com/yourhandle/openwriter/discussions) - General questions and discussions
+
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- [OpenRouter](https://openrouter.ai/) for providing access to various AI models
+- All open-source libraries and frameworks used in this project

@@ -1,14 +1,15 @@
-import express, { Request, Response } from 'express';
+import express from 'express';
 import { generateText } from '../utils/openrouter';
 
 const router = express.Router();
 
-router.post('/generate', async (req: Request, res: Response) => {
+router.post('/generate', async (req, res) => {
   try {
     const { messages, model, temperature, max_tokens } = req.body;
     
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
-      return res.status(400).json({ error: 'Messages are required and must be an array' });
+      res.status(400).json({ error: 'Messages are required and must be an array' });
+      return;
     }
 
     const result = await generateText(messages, { model, temperature, max_tokens });
