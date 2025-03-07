@@ -5,7 +5,7 @@ const router = express.Router();
 
 router.post('/generate', async (req, res) => {
   try {
-    const { messages, model, temperature, max_tokens, stream } = req.body;
+    const { messages, model, temperature, max_tokens, stream, enableCaching } = req.body;
     
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       res.status(400).json({ error: 'Messages are required and must be an array' });
@@ -18,10 +18,18 @@ router.post('/generate', async (req, res) => {
         model, 
         temperature, 
         max_tokens,
-        stream: false // Not supporting streaming in the initial implementation
+        stream: false, // Not supporting streaming in the initial implementation
+        enableCaching: enableCaching !== false // Enable caching by default
       });
       
-      res.json(result);
+      // Add a field to indicate caching was used
+      const responseData = {
+        ...result,
+        caching_enabled: enableCaching !== false,
+        provider: model ? model.split('/')[0] : 'unknown'
+      };
+      
+      res.json(responseData);
     } catch (error) {
       console.error('OpenAI SDK method failed, falling back to direct API:', error);
       
@@ -30,10 +38,19 @@ router.post('/generate', async (req, res) => {
         model, 
         temperature, 
         max_tokens,
-        stream: false
+        stream: false,
+        enableCaching: enableCaching !== false
       });
       
-      res.json(directResult);
+      // Add a field to indicate caching was used
+      const responseData = {
+        ...directResult,
+        caching_enabled: enableCaching !== false,
+        provider: model ? model.split('/')[0] : 'unknown',
+        fallback_method: 'direct_api'
+      };
+      
+      res.json(responseData);
     }
   } catch (error) {
     console.error('Error generating text:', error);

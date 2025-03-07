@@ -7,6 +7,7 @@ export default function EditorPage() {
   const [aiResponse, setAiResponse] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [selectedModel, setSelectedModel] = useState<string>('anthropic/claude-3-haiku');
+  const [enableCaching, setEnableCaching] = useState<boolean>(true);
 
   const handleGenerateContent = async () => {
     setIsLoading(true);
@@ -23,7 +24,8 @@ export default function EditorPage() {
           ],
           model: selectedModel,
           temperature: 0.7,
-          max_tokens: 1000
+          max_tokens: 1000,
+          enableCaching: enableCaching
         }),
       });
 
@@ -34,6 +36,18 @@ export default function EditorPage() {
         // Could be either format, check for object vs string content
         const messageContent = data.choices[0].message?.content || data.choices[0].message;
         setAiResponse(messageContent);
+        
+        // Log caching info if available
+        if (data.usage?.cache_discount !== undefined) {
+          console.log(`Cache usage info - Discount: ${data.usage.cache_discount}`);
+          
+          // Add caching info to response if available
+          if (data.usage.cache_discount > 0) {
+            setAiResponse(prev => 
+              prev + `\n\n---\n*Used cached prompt: saved ${Math.round(data.usage.cache_discount * 100)}% on token costs*`
+            );
+          }
+        }
       } else if (data.content) {
         // Alternative format that might be returned
         setAiResponse(data.content);
@@ -92,17 +106,33 @@ export default function EditorPage() {
             <div className="mb-4 flex justify-between items-center">
               <h2 className="text-xl font-semibold text-gray-800">Editor</h2>
               <div className="flex items-center space-x-2">
-                <select
-                  className="py-2 px-3 border border-gray-300 rounded-md text-sm"
-                  value={selectedModel}
-                  onChange={(e) => setSelectedModel(e.target.value)}
-                >
-                  {models.map((model) => (
-                    <option key={model.id} value={model.id}>
-                      {model.name}
-                    </option>
-                  ))}
-                </select>
+                <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+                  <select
+                    className="py-2 px-3 border border-gray-300 rounded-md text-sm"
+                    value={selectedModel}
+                    onChange={(e) => setSelectedModel(e.target.value)}
+                  >
+                    {models.map((model) => (
+                      <option key={model.id} value={model.id}>
+                        {model.name}
+                      </option>
+                    ))}
+                  </select>
+                  
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="cachingToggle"
+                      checked={enableCaching}
+                      onChange={(e) => setEnableCaching(e.target.checked)}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="cachingToggle" className="text-sm text-gray-700">
+                      Enable caching
+                    </label>
+                  </div>
+                </div>
+                
                 <button
                   onClick={handleGenerateContent}
                   disabled={isLoading || !content.trim()}
