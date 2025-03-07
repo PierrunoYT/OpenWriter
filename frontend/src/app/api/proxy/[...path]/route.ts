@@ -60,7 +60,27 @@ export async function POST(
   
   try {
     const body = await request.json();
-    console.log(`Making POST request to backend: ${url} with body keys: ${Object.keys(body).join(', ')}`);
+    
+    // Special handling for generate endpoint
+    if (path === 'ai/generate') {
+      console.log(`Proxying chat/generate request with ${body.messages?.length || 0} messages`);
+      
+      // Check if messages array is valid
+      if (!body.messages || !Array.isArray(body.messages) || body.messages.length === 0) {
+        console.error('Invalid messages array in request');
+        return NextResponse.json(
+          { error: 'Invalid messages array in request' },
+          { status: 400 }
+        );
+      }
+      
+      // Log message roles for debugging
+      const roles = body.messages.map((msg: any) => msg.role).join(', ');
+      console.log(`Message roles: ${roles}`);
+    }
+    
+    // Make the API request to backend
+    console.log(`Making POST request to backend: ${url}`);
     
     const response = await fetch(url, {
       method: 'POST',
@@ -73,20 +93,70 @@ export async function POST(
     
     console.log(`Backend POST response status: ${response.status}`);
     
+    // Handle unsuccessful responses
     if (!response.ok) {
-      const text = await response.text();
-      console.error(`Backend POST error response (${response.status}):`, text);
-      throw new Error(`Backend returned status ${response.status}: ${text}`);
+      // Try to get response text for more detailed error
+      try {
+        const text = await response.text();
+        console.error(`Backend POST error response (${response.status}):`, text);
+        
+        // Return the error with backend status code and message
+        return NextResponse.json(
+          { error: `Backend API error: ${text || 'No error details provided'}` },
+          { status: response.status }
+        );
+      } catch (textError) {
+        console.error('Failed to read error response text:', textError);
+        
+        // Return generic error if we can't get details
+        return NextResponse.json(
+          { error: `Backend returned status ${response.status} with no details` },
+          { status: response.status }
+        );
+      }
     }
     
-    const data = await response.json();
-    console.log(`Successfully received POST response from backend`);
-    
-    return NextResponse.json(data);
+    // Handle successful responses
+    try {
+      // First get the response as text
+      const responseText = await response.text();
+      
+      // Check if we got an empty response
+      if (!responseText || responseText.trim() === '') {
+        console.error('Backend returned empty response');
+        return NextResponse.json(
+          { error: 'Backend returned empty response' },
+          { status: 500 }
+        );
+      }
+      
+      // Try to parse the response as JSON
+      try {
+        const data = JSON.parse(responseText);
+        console.log(`Successfully received and parsed POST response from backend`);
+        return NextResponse.json(data);
+      } catch (jsonError) {
+        console.error('Failed to parse backend response as JSON:', jsonError, 'Response was:', responseText);
+        return NextResponse.json(
+          { error: 'Backend returned invalid JSON' },
+          { status: 500 }
+        );
+      }
+    } catch (responseError) {
+      console.error('Error reading backend response:', responseError);
+      return NextResponse.json(
+        { error: 'Failed to read backend response' },
+        { status: 500 }
+      );
+    }
   } catch (error) {
     console.error(`Error proxying to ${url}:`, error);
+    
+    // Provide more detailed error message
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    
     return NextResponse.json(
-      { error: 'Failed to send data to API' },
+      { error: `Failed to send data to API: ${errorMessage}` },
       { status: 500 }
     );
   }

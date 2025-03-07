@@ -52,12 +52,21 @@ export default function EditorPage() {
     setContent(''); // Clear input
     setIsLoading(true);
     
+    // Add a temporary "thinking" message that will be replaced
+    const thinkingMessage: ChatMessage = { 
+      role: 'assistant', 
+      content: 'Thinking...' 
+    };
+    setChatMessages([...updatedMessages, thinkingMessage]);
+    
     try {
-      // Create messages array with system prompt and all chat history
+      // Simplify to just the latest conversation for better compatibility
       const messagesForAPI = [
         { role: 'system', content: systemPrompt },
-        ...updatedMessages
+        userMessage // Just send the latest user message
       ];
+      
+      console.log('Sending chat message with system prompt and user message');
       
       const response = await fetch(`${API_BASE_URL}/ai/generate`, {
         method: 'POST',
@@ -73,35 +82,33 @@ export default function EditorPage() {
         }),
       });
       
-      // Check if the response is ok
+      // Handle various error cases
       if (!response.ok) {
         console.error(`API error: ${response.status}`);
-        // Add error message to chat
-        setChatMessages([
-          ...updatedMessages, 
-          { 
-            role: 'assistant', 
-            content: `Sorry, there was an error communicating with the API (${response.status}). Please try again.` 
-          }
-        ]);
+        
+        // Replace the "thinking" message with an error message
+        const errorMessages = [...updatedMessages, { 
+          role: 'assistant', 
+          content: `I'm sorry, but there was an error communicating with the AI (${response.status}). Please try again.` 
+        }];
+        setChatMessages(errorMessages);
         return;
       }
       
-      // Safely parse the JSON response
+      // Parse the response
       let data;
       try {
         const textResponse = await response.text();
         data = JSON.parse(textResponse);
       } catch (parseError) {
         console.error('Error parsing API response:', parseError);
-        // Add error message to chat
-        setChatMessages([
-          ...updatedMessages, 
-          { 
-            role: 'assistant', 
-            content: 'Sorry, there was an error processing the response from the API. Please try again.' 
-          }
-        ]);
+        
+        // Replace the "thinking" message with an error message
+        const errorMessages = [...updatedMessages, { 
+          role: 'assistant', 
+          content: 'Sorry, I received an invalid response from the server. Please try again.' 
+        }];
+        setChatMessages(errorMessages);
         return;
       }
       
@@ -109,18 +116,21 @@ export default function EditorPage() {
       if (data.choices && data.choices.length > 0) {
         const messageContent = data.choices[0].message?.content || '';
         
-        // Add assistant response to chat
-        setChatMessages([...updatedMessages, { role: 'assistant', content: messageContent }]);
+        // Replace the "thinking" message with the actual response
+        const responseMessages = [...updatedMessages, { 
+          role: 'assistant', 
+          content: messageContent 
+        }];
+        setChatMessages(responseMessages);
       } else {
-        // Fallback if we can't find the expected format
         console.error('Unexpected API response format:', data);
-        setChatMessages([
-          ...updatedMessages, 
-          { 
-            role: 'assistant', 
-            content: 'Received response in an unexpected format. Please try again.' 
-          }
-        ]);
+        
+        // Replace the "thinking" message with an error message
+        const errorMessages = [...updatedMessages, { 
+          role: 'assistant', 
+          content: 'I received an unexpected response format. Please try again or contact support.' 
+        }];
+        setChatMessages(errorMessages);
       }
     } catch (error) {
       console.error('Error sending chat message:', error);
