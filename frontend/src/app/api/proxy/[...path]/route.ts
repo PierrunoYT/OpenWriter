@@ -5,7 +5,7 @@ export async function GET(
   { params }: { params: { path: string[] } }
 ) {
   const path = params.path.join('/');
-  const backendUrl = process.env.BACKEND_URL || 'http://localhost:3001';
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
   const url = `${backendUrl}/api/${path}${request.nextUrl.search}`;
   
   console.log(`Proxying GET request to: ${url}`);
@@ -53,7 +53,7 @@ export async function POST(
   { params }: { params: { path: string[] } }
 ) {
   const path = params.path.join('/');
-  const backendUrl = process.env.BACKEND_URL || 'http://localhost:3001';
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
   const url = `${backendUrl}/api/${path}`;
   
   console.log(`Proxying POST request to: ${url}`);
