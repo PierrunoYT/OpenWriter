@@ -28,10 +28,18 @@ export default function EditorPage() {
       });
 
       const data = await response.json();
+      
+      // Handle both OpenAI SDK response format and direct API response format
       if (data.choices && data.choices.length > 0) {
-        setAiResponse(data.choices[0].message.content);
+        // Could be either format, check for object vs string content
+        const messageContent = data.choices[0].message?.content || data.choices[0].message;
+        setAiResponse(messageContent);
+      } else if (data.content) {
+        // Alternative format that might be returned
+        setAiResponse(data.content);
       } else {
-        setAiResponse('Failed to generate content. Please try again.');
+        console.error('Unexpected API response format:', data);
+        setAiResponse('Failed to parse AI response. Please try again.');
       }
     } catch (error) {
       console.error('Error generating content:', error);
@@ -46,7 +54,10 @@ export default function EditorPage() {
     { id: 'anthropic/claude-3-sonnet', name: 'Claude 3 Sonnet' },
     { id: 'anthropic/claude-3-opus', name: 'Claude 3 Opus' },
     { id: 'openai/gpt-3.5-turbo', name: 'GPT-3.5 Turbo' },
-    { id: 'openai/gpt-4', name: 'GPT-4' },
+    { id: 'openai/gpt-4o', name: 'GPT-4o' },
+    { id: 'google/gemini-pro', name: 'Gemini Pro' },
+    { id: 'meta-llama/llama-3-8b-instruct', name: 'Llama 3 8B' },
+    { id: 'meta-llama/llama-3-70b-instruct', name: 'Llama 3 70B' },
   ];
 
   return (
