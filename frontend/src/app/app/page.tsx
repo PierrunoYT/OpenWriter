@@ -73,7 +73,37 @@ export default function EditorPage() {
         }),
       });
       
-      const data = await response.json();
+      // Check if the response is ok
+      if (!response.ok) {
+        console.error(`API error: ${response.status}`);
+        // Add error message to chat
+        setChatMessages([
+          ...updatedMessages, 
+          { 
+            role: 'assistant', 
+            content: `Sorry, there was an error communicating with the API (${response.status}). Please try again.` 
+          }
+        ]);
+        return;
+      }
+      
+      // Safely parse the JSON response
+      let data;
+      try {
+        const textResponse = await response.text();
+        data = JSON.parse(textResponse);
+      } catch (parseError) {
+        console.error('Error parsing API response:', parseError);
+        // Add error message to chat
+        setChatMessages([
+          ...updatedMessages, 
+          { 
+            role: 'assistant', 
+            content: 'Sorry, there was an error processing the response from the API. Please try again.' 
+          }
+        ]);
+        return;
+      }
       
       // Get the assistant's response
       if (data.choices && data.choices.length > 0) {
@@ -81,6 +111,16 @@ export default function EditorPage() {
         
         // Add assistant response to chat
         setChatMessages([...updatedMessages, { role: 'assistant', content: messageContent }]);
+      } else {
+        // Fallback if we can't find the expected format
+        console.error('Unexpected API response format:', data);
+        setChatMessages([
+          ...updatedMessages, 
+          { 
+            role: 'assistant', 
+            content: 'Received response in an unexpected format. Please try again.' 
+          }
+        ]);
       }
     } catch (error) {
       console.error('Error sending chat message:', error);
@@ -147,7 +187,23 @@ export default function EditorPage() {
         }),
       });
 
-      const data = await response.json();
+      // Check if the response is ok
+      if (!response.ok) {
+        console.error(`API error: ${response.status}`);
+        setAiResponse(`Error: The API returned a ${response.status} status code. Please try again.`);
+        return;
+      }
+      
+      // Safely parse the JSON response
+      let data;
+      try {
+        const textResponse = await response.text();
+        data = JSON.parse(textResponse);
+      } catch (parseError) {
+        console.error('Error parsing API response:', parseError);
+        setAiResponse('Error: Failed to parse the API response. Please try again.');
+        return;
+      }
       
       // Handle both OpenAI SDK response format and direct API response format
       if (data.choices && data.choices.length > 0) {
