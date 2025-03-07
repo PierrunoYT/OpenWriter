@@ -26,6 +26,8 @@ export default function EditorPage() {
   const [outputFormat, setOutputFormat] = useState<string>('text');
   const [models, setModels] = useState<Model[]>([]);
   const [loadingModels, setLoadingModels] = useState<boolean>(true);
+  const [systemPrompt, setSystemPrompt] = useState<string>('You are a helpful writing assistant.');
+  const [showSystemPrompt, setShowSystemPrompt] = useState<boolean>(false);
 
   const handleGenerateContent = async () => {
     setIsLoading(true);
@@ -40,8 +42,8 @@ export default function EditorPage() {
             { 
               role: 'system', 
               content: useStructuredOutput 
-                ? `You are a helpful writing assistant. Format your response as ${outputFormat}.` 
-                : 'You are a helpful writing assistant.'
+                ? `${systemPrompt} Format your response as ${outputFormat}.` 
+                : systemPrompt
             },
             { role: 'user', content }
           ],
@@ -173,6 +175,15 @@ export default function EditorPage() {
     { id: 'json', name: 'JSON' },
     { id: 'markdown', name: 'Markdown' },
   ];
+  
+  // Preset system prompts
+  const presetSystemPrompts = [
+    { id: 'default', name: 'Default', prompt: 'You are a helpful writing assistant.' },
+    { id: 'academic', name: 'Academic Writing', prompt: 'You are an academic writing assistant. Use formal language, cite sources where appropriate, and structure responses logically with clear introductions, well-developed arguments, and concise conclusions.' },
+    { id: 'creative', name: 'Creative Writing', prompt: 'You are a creative writing assistant. Use vivid language, metaphors, and sensory details to craft engaging narratives. Develop interesting characters and compelling plots when appropriate.' },
+    { id: 'business', name: 'Business Writing', prompt: 'You are a business writing assistant. Maintain professional tone, use clear and concise language, and emphasize key information. Format responses appropriately for business communications.' },
+    { id: 'technical', name: 'Technical Writing', prompt: 'You are a technical writing assistant. Explain complex concepts clearly, use precise terminology, and structure information logically. Include relevant details while maintaining clarity for the intended audience.' },
+  ];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -203,98 +214,152 @@ export default function EditorPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Editor Section */}
           <div className="bg-white rounded-lg shadow-sm p-6">
-            <div className="mb-4 flex justify-between items-center">
-              <h2 className="text-xl font-semibold text-gray-800">Editor</h2>
-              <div className="flex items-center space-x-2">
-                <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
-                  {loadingModels ? (
-                    <select
-                      className="py-2 px-3 border border-gray-300 rounded-md text-sm"
-                      disabled
-                    >
-                      <option>Loading models...</option>
-                    </select>
-                  ) : (
-                    <select
-                      className="py-2 px-3 border border-gray-300 rounded-md text-sm"
-                      value={selectedModel}
-                      onChange={(e) => {
-                        setSelectedModel(e.target.value);
-                        // Check if the selected model supports structured output
-                        const model = models.find(m => m.id === e.target.value);
-                        if (model && !model.supportsStructured) {
-                          setUseStructuredOutput(false);
-                        }
-                      }}
-                    >
-                      {models.map((model) => (
-                        <option key={model.id} value={model.id}>
-                          {model.name}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                  
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="cachingToggle"
-                      checked={enableCaching}
-                      onChange={(e) => setEnableCaching(e.target.checked)}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                    />
-                    <label htmlFor="cachingToggle" className="text-sm text-gray-700">
-                      Enable caching
-                    </label>
-                  </div>
-                </div>
-                
-                {/* Structured Output Controls */}
-                <div className="flex flex-col space-y-2 mt-2">
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="structuredToggle"
-                      checked={useStructuredOutput}
-                      onChange={(e) => setUseStructuredOutput(e.target.checked)}
-                      disabled={loadingModels || !models.find(m => m.id === selectedModel)?.supportsStructured}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded 
-                                disabled:opacity-50 disabled:cursor-not-allowed"
-                    />
-                    <label 
-                      htmlFor="structuredToggle" 
-                      className={`text-sm ${loadingModels || !models.find(m => m.id === selectedModel)?.supportsStructured 
-                        ? 'text-gray-400' 
-                        : 'text-gray-700'}`}
-                    >
-                      Use structured output
-                    </label>
+            <div className="mb-4">
+              <div className="flex justify-between items-center mb-2">
+                <h2 className="text-xl font-semibold text-gray-800">Editor</h2>
+                <div className="flex items-center space-x-2">
+                  <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+                    {loadingModels ? (
+                      <select
+                        className="py-2 px-3 border border-gray-300 rounded-md text-sm"
+                        disabled
+                      >
+                        <option>Loading models...</option>
+                      </select>
+                    ) : (
+                      <select
+                        className="py-2 px-3 border border-gray-300 rounded-md text-sm"
+                        value={selectedModel}
+                        onChange={(e) => {
+                          setSelectedModel(e.target.value);
+                          // Check if the selected model supports structured output
+                          const model = models.find(m => m.id === e.target.value);
+                          if (model && !model.supportsStructured) {
+                            setUseStructuredOutput(false);
+                          }
+                        }}
+                      >
+                        {models.map((model) => (
+                          <option key={model.id} value={model.id}>
+                            {model.name}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                    
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id="cachingToggle"
+                        checked={enableCaching}
+                        onChange={(e) => setEnableCaching(e.target.checked)}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                      <label htmlFor="cachingToggle" className="text-sm text-gray-700">
+                        Enable caching
+                      </label>
+                    </div>
                   </div>
                   
-                  {useStructuredOutput && (
-                    <select
-                      className="py-2 px-3 border border-gray-300 rounded-md text-sm"
-                      value={outputFormat}
-                      onChange={(e) => setOutputFormat(e.target.value)}
-                    >
-                      {outputFormats.map((format) => (
-                        <option key={format.id} value={format.id}>
-                          {format.name}
-                        </option>
-                      ))}
-                    </select>
-                  )}
+                  {/* Structured Output Controls */}
+                  <div className="flex flex-col space-y-2 mt-2">
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id="structuredToggle"
+                        checked={useStructuredOutput}
+                        onChange={(e) => setUseStructuredOutput(e.target.checked)}
+                        disabled={loadingModels || !models.find(m => m.id === selectedModel)?.supportsStructured}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded 
+                                  disabled:opacity-50 disabled:cursor-not-allowed"
+                      />
+                      <label 
+                        htmlFor="structuredToggle" 
+                        className={`text-sm ${loadingModels || !models.find(m => m.id === selectedModel)?.supportsStructured 
+                          ? 'text-gray-400' 
+                          : 'text-gray-700'}`}
+                      >
+                        Use structured output
+                      </label>
+                    </div>
+                    
+                    {useStructuredOutput && (
+                      <select
+                        className="py-2 px-3 border border-gray-300 rounded-md text-sm"
+                        value={outputFormat}
+                        onChange={(e) => setOutputFormat(e.target.value)}
+                      >
+                        {outputFormats.map((format) => (
+                          <option key={format.id} value={format.id}>
+                            {format.name}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+                  
+                  <button
+                    onClick={handleGenerateContent}
+                    disabled={isLoading || !content.trim() || loadingModels}
+                    className={`py-2 px-4 rounded bg-blue-600 text-white text-sm ${
+                      isLoading || !content.trim() || loadingModels ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'
+                    }`}
+                  >
+                    {isLoading ? 'Generating...' : 'Generate'}
+                  </button>
+                </div>
+              </div>
+              
+              {/* System Prompt Controls */}
+              <div className="mb-2">
+                <div className="flex items-center space-x-2 mb-2">
+                  <input
+                    type="checkbox"
+                    id="systemPromptToggle"
+                    checked={showSystemPrompt}
+                    onChange={(e) => setShowSystemPrompt(e.target.checked)}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="systemPromptToggle" className="text-sm text-gray-700">
+                    Customize system prompt
+                  </label>
                 </div>
                 
-                <button
-                  onClick={handleGenerateContent}
-                  disabled={isLoading || !content.trim() || loadingModels}
-                  className={`py-2 px-4 rounded bg-blue-600 text-white text-sm ${
-                    isLoading || !content.trim() || loadingModels ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'
-                  }`}
-                >
-                  {isLoading ? 'Generating...' : 'Generate'}
-                </button>
+                {showSystemPrompt && (
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <label htmlFor="presetPrompt" className="text-sm text-gray-700">
+                        Preset:
+                      </label>
+                      <select
+                        id="presetPrompt"
+                        className="py-1 px-3 border border-gray-300 rounded-md text-sm flex-grow"
+                        onChange={(e) => {
+                          const selectedPreset = presetSystemPrompts.find(p => p.id === e.target.value);
+                          if (selectedPreset) {
+                            setSystemPrompt(selectedPreset.prompt);
+                          }
+                        }}
+                        defaultValue="default"
+                      >
+                        {presetSystemPrompts.map((preset) => (
+                          <option key={preset.id} value={preset.id}>
+                            {preset.name}
+                          </option>
+                        ))}
+                        <option value="custom">Custom</option>
+                      </select>
+                    </div>
+                    
+                    <textarea
+                      className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                      placeholder="Enter a custom system prompt here..."
+                      value={systemPrompt}
+                      onChange={(e) => setSystemPrompt(e.target.value)}
+                      rows={3}
+                    ></textarea>
+                  </div>
+                )}
               </div>
             </div>
             
