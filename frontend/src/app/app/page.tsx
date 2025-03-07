@@ -30,8 +30,9 @@ export default function EditorPage() {
   const handleGenerateContent = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('http://localhost:3001/api/ai/generate', {
+      const response = await fetch(`${API_BASE_URL}/api/ai/generate`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -133,12 +134,20 @@ export default function EditorPage() {
     }
   };
 
+  // API base URL - use environment variable or fallback to localhost
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+  
   // Fetch models from the API
   useEffect(() => {
     const fetchModels = async () => {
       setLoadingModels(true);
       try {
-        const response = await fetch('http://localhost:3001/api/ai/models');
+        const response = await fetch(`${API_BASE_URL}/api/ai/models`, {
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
         const data = await response.json();
         
         if (data.data && Array.isArray(data.data)) {
