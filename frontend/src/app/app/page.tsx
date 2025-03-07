@@ -16,6 +16,11 @@ interface Model {
   supportsStructured?: boolean;
 }
 
+interface ChatMessage {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+}
+
 export default function EditorPage() {
   const [content, setContent] = useState<string>('');
   const [aiResponse, setAiResponse] = useState<string>('');
@@ -28,6 +33,61 @@ export default function EditorPage() {
   const [loadingModels, setLoadingModels] = useState<boolean>(true);
   const [systemPrompt, setSystemPrompt] = useState<string>('You are a helpful writing assistant.');
   const [showSystemPrompt, setShowSystemPrompt] = useState<boolean>(false);
+  const [isChatMode, setIsChatMode] = useState<boolean>(false);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+
+  // Clear chat messages
+  const handleClearChat = () => {
+    setChatMessages([]);
+  };
+
+  // Handle sending a chat message
+  const handleChatSend = async () => {
+    if (!content.trim()) return;
+    
+    // Add user message to chat
+    const userMessage: ChatMessage = { role: 'user', content };
+    const updatedMessages = [...chatMessages, userMessage];
+    setChatMessages(updatedMessages);
+    setContent(''); // Clear input
+    setIsLoading(true);
+    
+    try {
+      // Create messages array with system prompt and all chat history
+      const messagesForAPI = [
+        { role: 'system', content: systemPrompt },
+        ...updatedMessages
+      ];
+      
+      const response = await fetch(`${API_BASE_URL}/ai/generate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messages: messagesForAPI,
+          model: selectedModel,
+          temperature: 0.7,
+          max_tokens: 1000,
+          enableCaching: enableCaching
+        }),
+      });
+      
+      const data = await response.json();
+      
+      // Get the assistant's response
+      if (data.choices && data.choices.length > 0) {
+        const messageContent = data.choices[0].message?.content || '';
+        
+        // Add assistant response to chat
+        setChatMessages([...updatedMessages, { role: 'assistant', content: messageContent }]);
+      }
+    } catch (error) {
+      console.error('Error sending chat message:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleGenerateContent = async () => {
     setIsLoading(true);
@@ -211,12 +271,32 @@ export default function EditorPage() {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className={`grid grid-cols-1 ${!isChatMode ? 'lg:grid-cols-2' : ''} gap-8`}>
           {/* Editor Section */}
           <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="mb-4">
               <div className="flex justify-between items-center mb-2">
-                <h2 className="text-xl font-semibold text-gray-800">Editor</h2>
+                <div className="flex items-center space-x-3">
+                  <h2 className="text-xl font-semibold text-gray-800">
+                    {isChatMode ? "Chat" : "Editor"}
+                  </h2>
+                  <div className="relative inline-flex">
+                    <div className="flex p-1 bg-gray-200 rounded-md">
+                      <button
+                        onClick={() => setIsChatMode(false)}
+                        className={`px-3 py-1 text-sm rounded ${!isChatMode ? 'bg-white shadow-sm' : 'text-gray-600'}`}
+                      >
+                        Editor
+                      </button>
+                      <button
+                        onClick={() => setIsChatMode(true)}
+                        className={`px-3 py-1 text-sm rounded ${isChatMode ? 'bg-white shadow-sm' : 'text-gray-600'}`}
+                      >
+                        Chat
+                      </button>
+                    </div>
+                  </div>
+                </div>
                 <div className="flex items-center space-x-2">
                   <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
                     {loadingModels ? (
@@ -261,52 +341,57 @@ export default function EditorPage() {
                     </div>
                   </div>
                   
-                  {/* Structured Output Controls */}
-                  <div className="flex flex-col space-y-2 mt-2">
-                    <div className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        id="structuredToggle"
-                        checked={useStructuredOutput}
-                        onChange={(e) => setUseStructuredOutput(e.target.checked)}
-                        disabled={loadingModels || !models.find(m => m.id === selectedModel)?.supportsStructured}
-                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded 
-                                  disabled:opacity-50 disabled:cursor-not-allowed"
-                      />
-                      <label 
-                        htmlFor="structuredToggle" 
-                        className={`text-sm ${loadingModels || !models.find(m => m.id === selectedModel)?.supportsStructured 
-                          ? 'text-gray-400' 
-                          : 'text-gray-700'}`}
-                      >
-                        Use structured output
-                      </label>
+                  {/* Structured Output Controls - Only in editor mode */}
+                  {!isChatMode && (
+                    <div className="flex flex-col space-y-2 mt-2">
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id="structuredToggle"
+                          checked={useStructuredOutput}
+                          onChange={(e) => setUseStructuredOutput(e.target.checked)}
+                          disabled={loadingModels || !models.find(m => m.id === selectedModel)?.supportsStructured}
+                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded 
+                                    disabled:opacity-50 disabled:cursor-not-allowed"
+                        />
+                        <label 
+                          htmlFor="structuredToggle" 
+                          className={`text-sm ${loadingModels || !models.find(m => m.id === selectedModel)?.supportsStructured 
+                            ? 'text-gray-400' 
+                            : 'text-gray-700'}`}
+                        >
+                          Use structured output
+                        </label>
+                      </div>
+                      
+                      {useStructuredOutput && (
+                        <select
+                          className="py-2 px-3 border border-gray-300 rounded-md text-sm"
+                          value={outputFormat}
+                          onChange={(e) => setOutputFormat(e.target.value)}
+                        >
+                          {outputFormats.map((format) => (
+                            <option key={format.id} value={format.id}>
+                              {format.name}
+                            </option>
+                          ))}
+                        </select>
+                      )}
                     </div>
-                    
-                    {useStructuredOutput && (
-                      <select
-                        className="py-2 px-3 border border-gray-300 rounded-md text-sm"
-                        value={outputFormat}
-                        onChange={(e) => setOutputFormat(e.target.value)}
-                      >
-                        {outputFormats.map((format) => (
-                          <option key={format.id} value={format.id}>
-                            {format.name}
-                          </option>
-                        ))}
-                      </select>
-                    )}
-                  </div>
+                  )}
                   
-                  <button
-                    onClick={handleGenerateContent}
-                    disabled={isLoading || !content.trim() || loadingModels}
-                    className={`py-2 px-4 rounded bg-blue-600 text-white text-sm ${
-                      isLoading || !content.trim() || loadingModels ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'
-                    }`}
-                  >
-                    {isLoading ? 'Generating...' : 'Generate'}
-                  </button>
+                  {/* Generate button - Only in editor mode */}
+                  {!isChatMode && (
+                    <button
+                      onClick={handleGenerateContent}
+                      disabled={isLoading || !content.trim() || loadingModels}
+                      className={`py-2 px-4 rounded bg-blue-600 text-white text-sm ${
+                        isLoading || !content.trim() || loadingModels ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'
+                      }`}
+                    >
+                      {isLoading ? 'Generating...' : 'Generate'}
+                    </button>
+                  )}
                 </div>
               </div>
               
@@ -363,45 +448,110 @@ export default function EditorPage() {
               </div>
             </div>
             
-            <textarea
-              className="w-full h-[500px] p-4 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Write or paste your content here..."
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-            ></textarea>
-          </div>
-
-          {/* AI Response Section */}
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <div className="mb-4">
-              <h2 className="text-xl font-semibold text-gray-800">AI Response</h2>
-            </div>
-            <div className="w-full h-[500px] p-4 border border-gray-200 rounded-md overflow-y-auto bg-gray-50">
-              {isLoading ? (
-                <div className="flex items-center justify-center h-full">
-                  <div className="animate-pulse text-gray-400">Generating response...</div>
-                </div>
-              ) : aiResponse ? (
-                <div className="prose max-w-none">
-                  {outputFormat === 'json' || aiResponse.startsWith('{') || aiResponse.startsWith('[') ? (
-                    <pre className="bg-gray-100 p-4 rounded overflow-auto">
-                      <code>{aiResponse}</code>
-                    </pre>
+            {isChatMode ? (
+              <div className="flex flex-col h-[500px]">
+                <div className="flex-1 overflow-y-auto mb-4 border border-gray-200 rounded-md p-4 relative">
+                  {chatMessages.length > 0 && (
+                    <button 
+                      onClick={handleClearChat}
+                      className="absolute top-2 right-2 text-xs text-gray-500 hover:text-red-500 bg-white px-2 py-1 rounded-md border border-gray-200"
+                    >
+                      Clear Chat
+                    </button>
+                  )}
+                  
+                  {chatMessages.length === 0 ? (
+                    <div className="text-gray-400 h-full flex items-center justify-center">
+                      <p>Start a new conversation...</p>
+                    </div>
                   ) : (
-                    aiResponse.split('\n').map((paragraph, index) => (
-                      <p key={index} className="mb-4">
-                        {paragraph}
-                      </p>
-                    ))
+                    <div className="space-y-4">
+                      {chatMessages.map((msg, index) => (
+                        <div 
+                          key={index}
+                          className={`p-3 rounded-lg ${
+                            msg.role === 'user' 
+                              ? 'bg-blue-50 ml-8 border border-blue-100' 
+                              : 'bg-gray-50 mr-8 border border-gray-100'
+                          }`}
+                        >
+                          <div className="font-semibold text-xs text-gray-500 mb-1">
+                            {msg.role === 'user' ? 'You' : 'Assistant'}
+                          </div>
+                          <div className="whitespace-pre-wrap">
+                            {msg.content.split('\n').map((line, i) => (
+                              <p key={i} className="mb-2">{line}</p>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </div>
-              ) : (
-                <div className="text-gray-400 h-full flex items-center justify-center">
-                  <p>AI response will appear here.</p>
+                <div className="flex items-center">
+                  <input
+                    className="flex-1 p-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Type your message here..."
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleChatSend()}
+                  />
+                  <button
+                    onClick={handleChatSend}
+                    disabled={isLoading || !content.trim()}
+                    className={`py-2 px-4 rounded-r-md bg-blue-600 text-white ${
+                      isLoading || !content.trim() ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'
+                    }`}
+                  >
+                    {isLoading ? 'Sending...' : 'Send'}
+                  </button>
                 </div>
-              )}
-            </div>
+              </div>
+            ) : (
+              <textarea
+                className="w-full h-[500px] p-4 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Write or paste your content here..."
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+              ></textarea>
+            )}
           </div>
+
+          {/* AI Response Section - Only show in editor mode */}
+          {!isChatMode && (
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="mb-4">
+                <h2 className="text-xl font-semibold text-gray-800">AI Response</h2>
+              </div>
+              <div className="w-full h-[500px] p-4 border border-gray-200 rounded-md overflow-y-auto bg-gray-50">
+                {isLoading ? (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="animate-pulse text-gray-400">Generating response...</div>
+                  </div>
+                ) : aiResponse ? (
+                  <div className="prose max-w-none">
+                    {outputFormat === 'json' || aiResponse.startsWith('{') || aiResponse.startsWith('[') ? (
+                      <pre className="bg-gray-100 p-4 rounded overflow-auto">
+                        <code>{aiResponse}</code>
+                      </pre>
+                    ) : (
+                      aiResponse.split('\n').map((paragraph, index) => (
+                        <p key={index} className="mb-4">
+                          {paragraph}
+                        </p>
+                      ))
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-gray-400 h-full flex items-center justify-center">
+                    <p>AI response will appear here.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+          
+          {/* No need for conversation history sidebar in chat mode since it's already in the main panel */}
         </div>
       </main>
     </div>
