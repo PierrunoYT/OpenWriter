@@ -12,15 +12,19 @@ export default function Home() {
           </div>
           <nav className="hidden md:flex space-x-8">
             <a href="#features" className="text-gray-600 hover:text-blue-600">Features</a>
-            <a href="#pricing" className="text-gray-600 hover:text-blue-600">Pricing</a>
-            <a href="#about" className="text-gray-600 hover:text-blue-600">About</a>
+            <a href="https://github.com/yourhandle/openwriter" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-blue-600 flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+              </svg>
+              GitHub
+            </a>
           </nav>
           <div className="flex space-x-4">
-            <Link href="/login" className="py-2 px-4 rounded text-blue-600 border border-blue-600 hover:bg-blue-50">
-              Log in
-            </Link>
-            <Link href="/signup" className="py-2 px-4 rounded bg-blue-600 text-white hover:bg-blue-700">
-              Sign up
+            <Link 
+              href="/app" 
+              className="py-2 px-4 rounded bg-blue-600 text-white hover:bg-blue-700"
+            >
+              Open App
             </Link>
           </div>
         </div>
@@ -35,7 +39,7 @@ export default function Home() {
                 Transform Your Writing with AI
               </h1>
               <p className="text-xl text-gray-600 mb-8">
-                OpenWriter helps you create better content faster with powerful AI assistance.
+                OpenWriter is a free, open-source AI writing assistant that helps you create better content faster.
                 Access multiple models through OpenRouter integration.
               </p>
               <div className="flex flex-col sm:flex-row justify-center gap-4">
@@ -46,10 +50,15 @@ export default function Home() {
                   Get Started
                 </Link>
                 <a 
-                  href="#demo" 
-                  className="py-3 px-8 rounded-lg border border-gray-300 text-gray-700 text-lg font-medium hover:bg-gray-50 transition-colors"
+                  href="https://github.com/yourhandle/openwriter" 
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="py-3 px-8 rounded-lg border border-gray-300 text-gray-700 text-lg font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
                 >
-                  See Demo
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+                  </svg>
+                  GitHub
                 </a>
               </div>
             </div>
@@ -91,63 +100,15 @@ export default function Home() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-semibold mb-2 text-gray-900">Document Storage</h3>
+                <h3 className="text-xl font-semibold mb-2 text-gray-900">Free & Open Source</h3>
                 <p className="text-gray-600">
-                  Save and organize your writing projects in the cloud for easy access across all your devices.
+                  Completely free to use and open source. Modify, extend, and contribute to the project on GitHub.
                 </p>
               </div>
             </div>
           </div>
         </section>
       </main>
-
-      {/* Footer */}
-      <footer className="bg-gray-800 text-white py-12">
-        <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-4 gap-8">
-            <div>
-              <h3 className="text-lg font-semibold mb-4">OpenWriter</h3>
-              <p className="text-gray-400">
-                Open-source AI writing assistant. Empowering writers with AI technology to create better content faster.
-              </p>
-              <div className="mt-4">
-                <a href="https://github.com/yourhandle/openwriter" className="text-blue-400 hover:text-white flex items-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
-                  </svg>
-                  Star us on GitHub
-                </a>
-              </div>
-            </div>
-            <div>
-              <h4 className="text-lg font-semibold mb-4">Product</h4>
-              <ul className="space-y-2">
-                <li><a href="#features" className="text-gray-400 hover:text-white">Features</a></li>
-                <li><a href="#pricing" className="text-gray-400 hover:text-white">Pricing</a></li>
-                <li><a href="#roadmap" className="text-gray-400 hover:text-white">Roadmap</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-lg font-semibold mb-4">Company</h4>
-              <ul className="space-y-2">
-                <li><a href="#about" className="text-gray-400 hover:text-white">About Us</a></li>
-                <li><a href="#blog" className="text-gray-400 hover:text-white">Blog</a></li>
-                <li><a href="#careers" className="text-gray-400 hover:text-white">Careers</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-lg font-semibold mb-4">Legal</h4>
-              <ul className="space-y-2">
-                <li><a href="#privacy" className="text-gray-400 hover:text-white">Privacy Policy</a></li>
-                <li><a href="#terms" className="text-gray-400 hover:text-white">Terms of Service</a></li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-gray-700 mt-8 pt-8 text-center text-gray-400">
-            <p>© {new Date().getFullYear()} OpenWriter. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }
