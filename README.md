@@ -23,7 +23,69 @@ The project is divided into two main components:
 - npm or yarn
 - OpenRouter API key
 
-### Backend Setup
+### Setup Instructions
+
+#### Windows
+
+1. Install Node.js and npm from [nodejs.org](https://nodejs.org/)
+2. Open Command Prompt or PowerShell
+3. Clone the repository and navigate to the project folder
+
+#### macOS
+
+1. Install Node.js and npm:
+   ```bash
+   # Using Homebrew
+   brew install node
+   ```
+2. Open Terminal
+3. Clone the repository and navigate to the project folder
+
+#### Linux
+
+1. Install Node.js and npm:
+   ```bash
+   # For Ubuntu/Debian
+   sudo apt update
+   sudo apt install nodejs npm
+   
+   # For Fedora
+   sudo dnf install nodejs npm
+   
+   # For Arch Linux
+   sudo pacman -S nodejs npm
+   ```
+2. Open Terminal
+3. Clone the repository and navigate to the project folder
+
+### Project Setup
+
+You can set up and run both frontend and backend at once from the root directory:
+
+1. Install all dependencies:
+   ```bash
+   npm run install:all
+   ```
+
+2. Create a `.env` file in the backend directory:
+   ```bash
+   cp backend/.env.example backend/.env
+   ```
+
+3. Add your OpenRouter API key to the backend `.env` file.
+
+4. Start both development servers:
+   ```bash
+   npm run dev
+   ```
+
+The frontend will run on http://localhost:3000 and the backend on http://localhost:3001 by default.
+
+### Individual Setup
+
+If you prefer to set up and run components individually:
+
+#### Backend Setup
 
 1. Navigate to the backend directory:
    ```bash
@@ -47,9 +109,7 @@ The project is divided into two main components:
    npm run dev
    ```
 
-The server will run on http://localhost:3001 by default.
-
-### Frontend Setup
+#### Frontend Setup
 
 1. Navigate to the frontend directory:
    ```bash
@@ -65,8 +125,6 @@ The server will run on http://localhost:3001 by default.
    ```bash
    npm run dev
    ```
-
-The frontend will run on http://localhost:3000 by default.
 
 ## Features
 
