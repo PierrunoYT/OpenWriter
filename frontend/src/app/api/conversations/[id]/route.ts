@@ -23,6 +23,9 @@ export async function GET(
     
     const messages = db.messages.getByConversation(id);
     
+    // Debug log to see what's being returned
+    console.log(`Fetching conversation ${id}. Found ${messages.length} messages.`);
+    
     return NextResponse.json({ conversation, messages });
   } catch (error) {
     console.error(`Error fetching conversation ID ${resolvedParams.id}:`, error);

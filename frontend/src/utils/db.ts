@@ -145,6 +145,9 @@ export const messagesDb = {
   add: (conversationId: number, role: string, content: string) => {
     const timestamp = Date.now();
     
+    // Debug log for message addition
+    console.log(`Adding message to conversation ${conversationId} with role ${role}`);
+    
     // Update the conversation's updated_at timestamp
     const conversations = readData(conversationsPath);
     const conversationIndex = conversations.findIndex((c: any) => c.id === conversationId);
@@ -152,6 +155,9 @@ export const messagesDb = {
     if (conversationIndex !== -1) {
       conversations[conversationIndex].updated_at = timestamp;
       writeData(conversationsPath, conversations);
+    } else {
+      console.error(`Attempted to add message to non-existent conversation: ${conversationId}`);
+      return false;
     }
     
     // Add new message
@@ -171,18 +177,30 @@ export const messagesDb = {
       created_at: timestamp
     };
     
+    console.log(`Created new message with ID ${newId} for conversation ${conversationId}`);
+    
     messages.push(newMessage);
     writeData(messagesPath, messages);
     
-    return true;
+    return { lastInsertRowid: newId };
   },
   
   // Get all messages for a conversation
   getByConversation: (conversationId: number) => {
     const messages = readData(messagesPath);
-    return messages
-      .filter((m: any) => m.conversation_id === conversationId)
+    console.log(`Reading messages for conversation ${conversationId}. Total messages in DB: ${messages.length}`);
+    
+    const conversationMessages = messages
+      .filter((m: any) => {
+        // Debug information about each message
+        console.log(`Message ID: ${m.id}, Conversation ID: ${m.conversation_id}, Role: ${m.role}, 
+          Matches current conversation: ${m.conversation_id === conversationId}`);
+        return m.conversation_id === conversationId;
+      })
       .sort((a: any, b: any) => a.created_at - b.created_at); // Sort by created_at ascending
+      
+    console.log(`Found ${conversationMessages.length} messages for conversation ${conversationId}`);
+    return conversationMessages;
   }
 };
 

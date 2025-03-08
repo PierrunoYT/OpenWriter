@@ -87,12 +87,16 @@ export default function EditorPage() {
       
       const data = await response.json();
       
+      // Debug log
+      console.log('Conversation data received:', data);
+      console.log('Messages in the conversation:', data.messages);
+      
       // Update UI with conversation data
       setCurrentConversation(id);
-      setChatMessages(data.messages.map((msg: any) => ({
+      setChatMessages(data.messages ? data.messages.map((msg: any) => ({
         role: msg.role,
         content: msg.content
-      })));
+      })) : []);
       
       // Update other state from the conversation
       if (data.conversation.system_prompt) {
@@ -113,6 +117,7 @@ export default function EditorPage() {
   const createConversation = async (title: string) => {
     try {
       setIsCreatingConversation(true);
+      console.log(`Creating new conversation with title: ${title}`);
       
       const response = await fetch('/api/conversations', {
         method: 'POST',
@@ -124,24 +129,32 @@ export default function EditorPage() {
         })
       });
       
-      if (!response.ok) throw new Error('Failed to create conversation');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Failed to create conversation: ${errorData.error || response.status}`);
+      }
       
       const data = await response.json();
+      console.log(`Conversation created with ID:`, data.id);
       
-      // Refresh conversations
-      await fetchConversations();
-      
-      // Set as current conversation
-      setCurrentConversation(Number(data.id));
+      // Set as current conversation immediately, before refreshing list
+      const newConversationId = Number(data.id);
+      setCurrentConversation(newConversationId);
       
       // Clear messages for new conversation
       setChatMessages([]);
       
+      // Refresh conversations
+      await fetchConversations();
+      
       setNewConversationTitle('');
       setIsCreatingConversation(false);
+      
+      return newConversationId;
     } catch (error) {
       console.error('Error creating conversation:', error);
       setIsCreatingConversation(false);
+      throw error;
     }
   };
   
@@ -193,14 +206,27 @@ export default function EditorPage() {
   
   // Save a message to the current conversation
   const saveMessage = async (role: string, content: string) => {
-    if (!currentConversation) return;
+    if (!currentConversation) {
+      console.error('Attempted to save message without active conversation');
+      return;
+    }
     
     try {
-      await fetch(`/api/conversations/${currentConversation}/messages`, {
+      console.log(`Saving ${role} message to conversation ${currentConversation}`);
+      const response = await fetch(`/api/conversations/${currentConversation}/messages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ role, content })
       });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`API error: ${response.status} - ${errorData.error || 'Unknown error'}`);
+      }
+      
+      const data = await response.json();
+      console.log(`Message saved successfully:`, data);
+      return data;
     } catch (error) {
       console.error('Error saving message:', error);
     }
@@ -229,15 +255,28 @@ export default function EditorPage() {
     setContent(''); // Clear input
     setIsLoading(true);
     
-    // If we don't have an active conversation yet, create one with default title
-    if (!currentConversation) {
-      const defaultTitle = userMessage.content.substring(0, 30) + (userMessage.content.length > 30 ? '...' : '');
-      await createConversation(defaultTitle);
-    }
-    
-    // Save user message to the conversation
-    if (currentConversation) {
-      await saveMessage('user', userMessage.content);
+    try {
+      let conversationId = currentConversation;
+      
+      // If we don't have an active conversation yet, create one with default title
+      if (!conversationId) {
+        console.log('No active conversation, creating a new one');
+        const defaultTitle = userMessage.content.substring(0, 30) + (userMessage.content.length > 30 ? '...' : '');
+        conversationId = await createConversation(defaultTitle);
+        console.log('Created new conversation with ID:', conversationId);
+      } else {
+        console.log('Using existing conversation:', conversationId);
+      }
+      
+      // Save user message to the conversation
+      console.log('About to save user message, conversation ID:', conversationId);
+      if (conversationId) {
+        await saveMessage('user', userMessage.content);
+      } else {
+        console.error('Failed to establish conversation ID before saving message');
+      }
+    } catch (error) {
+      console.error('Error in conversation/message setup:', error);
     }
     
     // Add a temporary "thinking" message that will be replaced
@@ -319,7 +358,10 @@ export default function EditorPage() {
         
         // Save the assistant message to the conversation
         if (currentConversation) {
+          console.log(`Saving assistant response to conversation ${currentConversation}`);
           await saveMessage('assistant', messageContent);
+        } else {
+          console.error('No active conversation ID when trying to save assistant response');
         }
       } else {
         console.error('Unexpected API response format:', data);
