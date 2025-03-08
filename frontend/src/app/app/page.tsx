@@ -67,6 +67,13 @@ export default function EditorPage() {
     }
   }, [theme]);
 
+  // Save system prompt and selected ID to localStorage when they change
+  useEffect(() => {
+    localStorage.setItem('systemPrompt', systemPrompt);
+    localStorage.setItem('selectedPromptId', selectedPromptId);
+    console.log(`Saved prompt settings to localStorage: ${selectedPromptId}`);
+  }, [systemPrompt, selectedPromptId]);
+
   // Fetch all conversations
   const fetchConversations = async () => {
     try {
@@ -497,9 +504,25 @@ export default function EditorPage() {
   // Direct API URL to OpenRouter
   const API_BASE_URL = 'https://openrouter.ai/api/v1';
   
-  // Load conversations on initial render
+  // Load conversations and restore system prompt on initial render
   useEffect(() => {
     fetchConversations();
+    
+    // Check if we have a stored system prompt in localStorage
+    const storedPrompt = localStorage.getItem('systemPrompt');
+    const storedPromptId = localStorage.getItem('selectedPromptId');
+    
+    if (storedPrompt) {
+      console.log('Restoring system prompt from localStorage');
+      setSystemPrompt(storedPrompt);
+      
+      if (storedPromptId) {
+        console.log(`Restoring prompt preset: ${storedPromptId}`);
+        setSelectedPromptId(storedPromptId);
+      } else {
+        setSelectedPromptId('custom');
+      }
+    }
   }, []);
   
   // Fetch available models from OpenRouter
@@ -712,7 +735,15 @@ export default function EditorPage() {
                   setCurrentConversation(null);
                   setChatMessages([]);
                   setIsChatMode(true);
-                  setSystemPrompt('You are a helpful writing assistant.');
+                  // Don't reset the system prompt if a custom one is selected
+                  // We only need to reset selectedPromptId if it's tied to a conversation
+                  if (selectedPromptId === 'custom') {
+                    // Keep the current custom prompt
+                    console.log('Keeping custom prompt when starting new chat');
+                  } else {
+                    // Keep using the current selected preset
+                    console.log(`Keeping selected preset: ${selectedPromptId}`);
+                  }
                 }}
                 className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white py-2 px-3 rounded-lg flex items-center justify-center gap-2 transition-colors"
               >
