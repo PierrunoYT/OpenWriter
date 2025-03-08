@@ -35,6 +35,7 @@ export default function EditorPage() {
   const [models, setModels] = useState<Model[]>([]);
   const [loadingModels, setLoadingModels] = useState<boolean>(true);
   const [systemPrompt, setSystemPrompt] = useState<string>('You are a helpful writing assistant.');
+  const [selectedPromptId, setSelectedPromptId] = useState<string>('default');
   const [showSystemPrompt, setShowSystemPrompt] = useState<boolean>(false);
   const [isChatMode, setIsChatMode] = useState<boolean>(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
@@ -100,8 +101,20 @@ export default function EditorPage() {
       
       // Update other state from the conversation
       if (data.conversation.system_prompt) {
-        setSystemPrompt(data.conversation.system_prompt);
+        const loadedPrompt = data.conversation.system_prompt;
+        setSystemPrompt(loadedPrompt);
+        
+        // Check if the loaded prompt matches any preset
+        const matchingPreset = presetSystemPrompts.find(p => p.prompt === loadedPrompt);
+        if (matchingPreset) {
+          console.log(`Loaded conversation uses preset: ${matchingPreset.name}`);
+          setSelectedPromptId(matchingPreset.id);
+        } else {
+          console.log('Loaded conversation uses custom prompt');
+          setSelectedPromptId('custom');
+        }
       }
+      
       if (data.conversation.model) {
         setSelectedModel(data.conversation.model);
       }
@@ -605,6 +618,7 @@ export default function EditorPage() {
   
   // Preset system prompts
   const presetSystemPrompts = [
+    { id: 'default', name: 'Default Assistant', prompt: 'You are a helpful writing assistant.' },
     { id: 'social-media', name: 'Social Media Posts', prompt: 'You are an elite social media content strategist. Create platform-perfect posts for multiple platforms that maximize engagement and conversion. For Twitter/X, craft punchy 280-character messages with strategic hashtags and viral hooks. For LinkedIn, develop thought leadership content with data-backed insights and professional CTAs. For Instagram, create visually descriptive captions with emotional resonance and trendy hashtag clusters. For TikTok/YouTube Shorts, draft compelling hooks and conversational scripts under 30 seconds. For Facebook, balance personal storytelling with shareable value. For Pinterest, create descriptive, keyword-rich pins with clear CTAs. For Reddit, craft authentic, community-specific content following subreddit rules. For Threads, design conversation starters that encourage replies. Always optimize for both algorithm visibility and authentic audience connection while adapting tone, length, and format to each platform\'s unique characteristics.' },
     { id: 'email', name: 'Email Writing', prompt: 'You are a conversion-focused email copywriting expert with 10+ years experience. Craft high-performing cold outreach, follow-ups, newsletters, and sales sequences. Create subject lines with 60%+ open rates using curiosity, value, or urgency triggers. Develop persuasive body copy with clear value propositions, social proof, and objection handling. Design strategic CTAs with psychological triggers. Follow email deliverability best practices with personalization tokens while maintaining optimal text-to-link ratios and mobile-responsive formatting.' },
     { id: 'business', name: 'Business Documents', prompt: 'You are a Harvard-trained business documentation specialist. Create executive-grade proposals, reports, and summaries that drive decision-making and showcase professionalism. Structure documents with impeccable C-suite friendly formatting including properly segmented executive summaries, strategic recommendations, and clear ROI projections. Use data visualization best practices and precise business terminology. Maintain authoritative tone with strategic positioning of key insights and implementation roadmaps that anticipate stakeholder questions and objections.' },
@@ -929,13 +943,18 @@ export default function EditorPage() {
                 <select
                   id="presetPrompt"
                   className="bg-slate-100 dark:bg-slate-700 border-0 text-slate-800 dark:text-slate-200 text-sm rounded-lg px-3 py-2 appearance-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:outline-none flex-grow md:max-w-md"
+                  value={selectedPromptId}
                   onChange={(e) => {
-                    const selectedPreset = presetSystemPrompts.find(p => p.id === e.target.value);
+                    const newSelectedId = e.target.value;
+                    setSelectedPromptId(newSelectedId);
+                    
+                    // If a preset is selected, update the system prompt
+                    const selectedPreset = presetSystemPrompts.find(p => p.id === newSelectedId);
                     if (selectedPreset) {
+                      console.log(`Applying preset: ${selectedPreset.name}`);
                       setSystemPrompt(selectedPreset.prompt);
                     }
                   }}
-                  defaultValue="default"
                 >
                   {presetSystemPrompts.map((preset) => (
                     <option key={preset.id} value={preset.id}>
@@ -950,7 +969,13 @@ export default function EditorPage() {
                 className="w-full p-3 bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent text-sm"
                 placeholder="Enter a custom system prompt here..."
                 value={systemPrompt}
-                onChange={(e) => setSystemPrompt(e.target.value)}
+                onChange={(e) => {
+                  setSystemPrompt(e.target.value);
+                  // If the user manually edits the prompt, set to custom mode
+                  if (selectedPromptId !== 'custom') {
+                    setSelectedPromptId('custom');
+                  }
+                }}
                 rows={3}
               ></textarea>
               <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
