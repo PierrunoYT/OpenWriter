@@ -5,16 +5,29 @@ import path from 'path';
 // Ensure the data directory exists
 const dataDir = path.join(process.cwd(), 'data');
 if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
+  try {
+    fs.mkdirSync(dataDir, { recursive: true });
+    console.log(`Created data directory at: ${dataDir}`);
+  } catch (err) {
+    console.error(`Failed to create data directory: ${err}`);
+  }
 }
 
 const dbPath = path.join(dataDir, 'conversations.db');
+console.log(`Database path: ${dbPath}`);
+
 let db: Database.Database;
 
 // Initialize database with retry logic to handle potential locking issues
 function initDb() {
   try {
-    db = new Database(dbPath);
+    // Add options for better compatibility on Windows systems
+    db = new Database(dbPath, {
+      verbose: console.log,
+      fileMustExist: false
+    });
+    
+    console.log('Successfully created database connection');
     
     // Create tables if they don't exist
     db.exec(`
@@ -40,6 +53,8 @@ function initDb() {
     return db;
   } catch (error) {
     console.error('Error initializing database:', error);
+    console.error(`Database path: ${dbPath}`);
+    console.error(`Data directory exists: ${fs.existsSync(dataDir)}`);
     throw error;
   }
 }
