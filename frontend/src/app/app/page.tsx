@@ -580,14 +580,24 @@ export default function EditorPage() {
           <div className="flex items-center">
             <button 
               onClick={() => setShowSidebar(!showSidebar)}
-              className="p-2 mr-4 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 rounded-md"
-              aria-label={showSidebar ? "Hide sidebar" : "Show sidebar"}
+              className={`flex items-center mr-4 px-3 py-1.5 text-sm text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 rounded-md transition-all duration-200 ease-in-out ${showSidebar ? 'bg-slate-100 dark:bg-slate-800' : 'bg-transparent'}`}
+              aria-label={showSidebar ? "Hide history" : "Show history"}
+              title={showSidebar ? "Hide chat history" : "Show chat history"}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="3" y1="12" x2="21" y2="12"></line>
-                <line x1="3" y1="6" x2="21" y2="6"></line>
-                <line x1="3" y1="18" x2="21" y2="18"></line>
-              </svg>
+              <div className="relative w-[20px] h-[20px] mr-2">
+                {/* Custom sidebar toggle icon with animation */}
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`transition-all duration-200 ${showSidebar ? 'opacity-100 rotate-0' : 'opacity-0 rotate-90'} absolute top-0 left-0`}>
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="9" y1="3" x2="9" y2="21"></line>
+                </svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`transition-all duration-200 ${showSidebar ? 'opacity-0 -rotate-90' : 'opacity-100 rotate-0'} absolute top-0 left-0`}>
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                  <path d="M15 3v18"></path>
+                </svg>
+              </div>
+              <span className="hidden sm:inline-block font-medium">
+                {showSidebar ? "Hide History" : "Show History"}
+              </span>
             </button>
             <span className="text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 mr-4">
               OpenWriter
