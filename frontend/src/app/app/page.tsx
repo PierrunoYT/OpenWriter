@@ -691,7 +691,7 @@ export default function EditorPage() {
         )}
         
         {/* Main Content Area */}
-        <main className={`flex-1 overflow-y-auto p-4 ${showSidebar ? 'ml-0' : ''}`}>
+        <main className={`flex-1 overflow-y-auto p-4 ${showSidebar ? 'ml-0' : ''} flex flex-col`}>
         {/* App Controls */}
         <div className="mb-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm">
@@ -894,9 +894,9 @@ export default function EditorPage() {
         </div>
         
         {/* Main Content Area */}
-        <div className={`grid grid-cols-1 ${!isChatMode ? 'lg:grid-cols-2' : ''} gap-6`}>
+        <div className={`grid grid-cols-1 ${!isChatMode ? 'lg:grid-cols-2' : ''} gap-6 flex-1`}>
           {/* Input Section */}
-          <div className={`bg-white dark:bg-slate-800 rounded-xl shadow-sm overflow-hidden border border-slate-200 dark:border-slate-700 ${isChatMode ? 'h-[70vh] min-h-[500px]' : ''}`}>
+          <div className={`bg-white dark:bg-slate-800 rounded-xl shadow-sm overflow-hidden border border-slate-200 dark:border-slate-700 ${isChatMode ? 'h-full min-h-[calc(100vh-240px)]' : ''}`}>
             {isChatMode ? (
               <div className="flex flex-col h-full">
                 {/* Chat Message Display */}
