@@ -1,28 +1,92 @@
 @import "tailwindcss";
 
-:root {
+/* Theme colors */
+:root,
+html,
+html.light {
   --background: #ffffff;
   --foreground: #171717;
+  color-scheme: light;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+html.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  color-scheme: dark;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not(.light):not(.dark) {
     --background: #0a0a0a;
     --foreground: #ededed;
   }
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Force Tailwind dark mode to work with .dark class on html */
+html.dark .dark\:bg-slate-800 {
+  background-color: rgb(30 41 59) !important;
+}
+
+html.dark .dark\:bg-slate-900 {
+  background-color: rgb(15 23 42) !important;
+}
+
+html.dark .dark\:bg-slate-700 {
+  background-color: rgb(51 65 85) !important;
+}
+
+html.dark .dark\:text-slate-100,
+html.dark .dark\:text-slate-200,
+html.dark .dark\:text-slate-300,
+html.dark .dark\:text-slate-400 {
+  color: rgb(241 245 249) !important;
+}
+
+html.dark .dark\:border-slate-700 {
+  border-color: rgb(51 65 85) !important;
+}
+
+html.dark .dark\:from-slate-900 {
+  --tw-gradient-from: rgb(15 23 42) !important;
+}
+
+html.dark .dark\:to-slate-800 {
+  --tw-gradient-to: rgb(30 41 59) !important;
+}
+
+/* Override background colors */
+html.dark,
+.theme-dark {
+  background-color: #0a0a0a;
+}
+
+.theme-dark body,
+.theme-dark .bg-white,
+.theme-dark .bg-white\/80 {
+  background-color: #0a0a0a !important;
+}
+
+.theme-dark .bg-slate-800 {
+  background-color: rgb(30 41 59) !important;
+}
+
+.theme-dark .bg-slate-900,
+.theme-dark .bg-slate-900\/80 {
+  background-color: rgb(15 23 42) !important;
+}
+
+.theme-dark .text-slate-800 {
+  color: rgb(241 245 249) !important;
+}
+
+.theme-dark .border-slate-200 {
+  border-color: rgb(51 65 85) !important;
 }
 
 /* Animations */

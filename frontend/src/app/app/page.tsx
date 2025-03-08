@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import ThemeToggle from '@/components/ThemeToggle';
+import { useTheme } from '@/app/providers';
 
 // Define types for models
 interface Model {
@@ -22,6 +24,7 @@ interface ChatMessage {
 }
 
 export default function EditorPage() {
+  const { theme } = useTheme();
   const [content, setContent] = useState<string>('');
   const [aiResponse, setAiResponse] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -43,6 +46,25 @@ export default function EditorPage() {
   const [showSidebar, setShowSidebar] = useState<boolean>(true);
   const [newConversationTitle, setNewConversationTitle] = useState<string>('');
   const [isCreatingConversation, setIsCreatingConversation] = useState<boolean>(false);
+
+  // Debug theme changes
+  useEffect(() => {
+    console.log('Current theme in main component:', theme);
+    
+    // Force HTML class update to match theme
+    const html = document.documentElement;
+    html.classList.remove('light', 'dark');
+    if (theme === 'dark') {
+      html.classList.add('dark');
+    } else if (theme === 'light') {
+      html.classList.add('light');
+    } else if (theme === 'system') {
+      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches
+        ? 'dark'
+        : 'light';
+      html.classList.add(systemTheme);
+    }
+  }, [theme]);
 
   // Fetch all conversations
   const fetchConversations = async () => {
@@ -549,9 +571,11 @@ export default function EditorPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 text-slate-800 dark:text-slate-100">
+    <div 
+      className={`min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 text-slate-800 dark:text-slate-100 ${theme === 'dark' ? 'theme-dark' : 'theme-light'}`}
+      data-theme={theme}>
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-b border-slate-200 dark:border-slate-700 py-4 shadow-sm">
+      <header className={`sticky top-0 z-10 ${theme === 'dark' ? 'bg-slate-900/80' : 'bg-white/80'} backdrop-blur-sm border-b ${theme === 'dark' ? 'border-slate-700' : 'border-slate-200'} py-4 shadow-sm`}>
         <div className="w-full px-6 flex justify-between items-center">
           <div className="flex items-center">
             <button 
@@ -576,7 +600,10 @@ export default function EditorPage() {
             </div>
           </div>
           
-          <div className="flex items-center">
+          <div className="flex items-center space-x-2">
+            {/* Theme Toggle */}
+            <ThemeToggle />
+            
             {/* GitHub icon with a better hover effect */}
             <a 
               href="https://github.com/yourhandle/openwriter" 
@@ -597,7 +624,7 @@ export default function EditorPage() {
       <div className="flex h-[calc(100vh-72px)]">
         {/* Conversation Sidebar */}
         {showSidebar && (
-          <aside className="w-64 border-r border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 overflow-y-auto">
+          <aside className={`w-64 border-r ${theme === 'dark' ? 'border-slate-700 bg-slate-900' : 'border-slate-200 bg-white'} overflow-y-auto`}>
             <div className="p-4">
               <button
                 onClick={() => {
@@ -1112,7 +1139,7 @@ export default function EditorPage() {
       </div>
       
       {/* Footer */}
-      <footer className="py-4 text-center text-xs text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-slate-700">
+      <footer className={`py-4 text-center text-xs ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'} border-t ${theme === 'dark' ? 'border-slate-700' : 'border-slate-200'}`}>
         <p>Powered by OpenRouter • Using {selectedModel}</p>
       </footer>
     </div>
