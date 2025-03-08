@@ -572,10 +572,10 @@ export default function EditorPage() {
 
   return (
     <div 
-      className={`min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 text-slate-800 dark:text-slate-100 ${theme === 'dark' ? 'theme-dark' : 'theme-light'}`}
+      className={`h-screen overflow-hidden flex flex-col bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 text-slate-800 dark:text-slate-100 ${theme === 'dark' ? 'theme-dark' : 'theme-light'}`}
       data-theme={theme}>
       {/* Header */}
-      <header className={`sticky top-0 z-10 ${theme === 'dark' ? 'bg-slate-900/80' : 'bg-white/80'} backdrop-blur-sm border-b ${theme === 'dark' ? 'border-slate-700' : 'border-slate-200'} py-4 shadow-sm`}>
+      <header className={`flex-shrink-0 z-10 ${theme === 'dark' ? 'bg-slate-900/80' : 'bg-white/80'} backdrop-blur-sm border-b ${theme === 'dark' ? 'border-slate-700' : 'border-slate-200'} py-3 shadow-sm`}>
         <div className="w-full px-6 flex justify-between items-center">
           <div className="flex items-center">
             <button 
@@ -631,7 +631,7 @@ export default function EditorPage() {
       </header>
 
       {/* Main Content with Sidebar */}
-      <div className="flex h-[calc(100vh-72px)]">
+      <div className="flex flex-1 overflow-hidden">
         {/* Conversation Sidebar */}
         {showSidebar && (
           <aside className={`w-64 border-r ${theme === 'dark' ? 'border-slate-700 bg-slate-900' : 'border-slate-200 bg-white'} overflow-y-auto`}>
@@ -701,7 +701,7 @@ export default function EditorPage() {
         )}
         
         {/* Main Content Area */}
-        <main className={`flex-1 overflow-y-auto p-4 ${showSidebar ? 'ml-0' : ''} flex flex-col`}>
+        <main className={`flex-1 overflow-hidden p-4 ${showSidebar ? 'ml-0' : ''} flex flex-col`}>
         {/* App Controls */}
         <div className="mb-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm">
@@ -904,13 +904,13 @@ export default function EditorPage() {
         </div>
         
         {/* Main Content Area */}
-        <div className={`grid grid-cols-1 ${!isChatMode ? 'lg:grid-cols-2' : ''} gap-6 flex-1`}>
+        <div className={`grid grid-cols-1 ${!isChatMode ? 'lg:grid-cols-2' : ''} gap-6 flex-1 overflow-hidden`}>
           {/* Input Section */}
-          <div className={`bg-white dark:bg-slate-800 rounded-xl shadow-sm overflow-hidden border border-slate-200 dark:border-slate-700 ${isChatMode ? 'h-full min-h-[calc(100vh-240px)]' : ''}`}>
+          <div className={`bg-white dark:bg-slate-800 rounded-xl shadow-sm overflow-hidden border border-slate-200 dark:border-slate-700 ${isChatMode ? 'h-full' : ''}`}>
             {isChatMode ? (
               <div className="flex flex-col h-full">
                 {/* Chat Message Display */}
-                <div className="flex-1 overflow-y-auto p-4 relative">
+                <div className="flex-1 overflow-y-auto p-3 relative">
                   {chatMessages.length > 0 && (
                     <button 
                       onClick={handleClearChat}
@@ -1149,7 +1149,7 @@ export default function EditorPage() {
       </div>
       
       {/* Footer */}
-      <footer className={`py-4 text-center text-xs ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'} border-t ${theme === 'dark' ? 'border-slate-700' : 'border-slate-200'}`}>
+      <footer className={`py-2 text-center text-xs ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'} border-t ${theme === 'dark' ? 'border-slate-700' : 'border-slate-200'} flex-shrink-0`}>
         <p>Powered by OpenRouter • Using {selectedModel}</p>
       </footer>
     </div>
