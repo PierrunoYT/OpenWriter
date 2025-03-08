@@ -7,7 +7,9 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const id = parseInt(params.id);
+    // Ensure params is awaited before accessing its properties
+    const resolvedParams = await params;
+    const id = parseInt(resolvedParams.id);
     
     if (isNaN(id)) {
       return NextResponse.json({ error: 'Invalid conversation ID' }, { status: 400 });
@@ -23,7 +25,7 @@ export async function GET(
     
     return NextResponse.json({ conversation, messages });
   } catch (error) {
-    console.error(`Error fetching conversation ID ${params.id}:`, error);
+    console.error(`Error fetching conversation ID ${resolvedParams.id}:`, error);
     return NextResponse.json({ error: 'Failed to fetch conversation' }, { status: 500 });
   }
 }
@@ -34,7 +36,9 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const id = parseInt(params.id);
+    // Ensure params is awaited before accessing its properties
+    const resolvedParams = await params;
+    const id = parseInt(resolvedParams.id);
     
     if (isNaN(id)) {
       return NextResponse.json({ error: 'Invalid conversation ID' }, { status: 400 });
@@ -49,7 +53,7 @@ export async function PUT(
     
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error(`Error updating conversation ID ${params.id}:`, error);
+    console.error(`Error updating conversation ID ${resolvedParams.id}:`, error);
     return NextResponse.json({ error: 'Failed to update conversation' }, { status: 500 });
   }
 }
@@ -60,7 +64,9 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const id = parseInt(params.id);
+    // Ensure params is awaited before accessing its properties
+    const resolvedParams = await params;
+    const id = parseInt(resolvedParams.id);
     
     if (isNaN(id)) {
       return NextResponse.json({ error: 'Invalid conversation ID' }, { status: 400 });
@@ -74,7 +80,7 @@ export async function DELETE(
     
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error(`Error deleting conversation ID ${params.id}:`, error);
+    console.error(`Error deleting conversation ID ${resolvedParams.id}:`, error);
     return NextResponse.json({ error: 'Failed to delete conversation' }, { status: 500 });
   }
 }

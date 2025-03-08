@@ -7,7 +7,9 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const id = parseInt(params.id);
+    // Ensure params is awaited before accessing its properties
+    const resolvedParams = await params;
+    const id = parseInt(resolvedParams.id);
     
     if (isNaN(id)) {
       return NextResponse.json({ error: 'Invalid conversation ID' }, { status: 400 });
@@ -23,7 +25,7 @@ export async function GET(
     
     return NextResponse.json({ messages });
   } catch (error) {
-    console.error(`Error fetching messages for conversation ID ${params.id}:`, error);
+    console.error(`Error fetching messages for conversation ID ${resolvedParams.id}:`, error);
     return NextResponse.json({ error: 'Failed to fetch messages' }, { status: 500 });
   }
 }
@@ -34,7 +36,9 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
-    const id = parseInt(params.id);
+    // Ensure params is awaited before accessing its properties
+    const resolvedParams = await params;
+    const id = parseInt(resolvedParams.id);
     
     if (isNaN(id)) {
       return NextResponse.json({ error: 'Invalid conversation ID' }, { status: 400 });
@@ -56,7 +60,7 @@ export async function POST(
     
     return NextResponse.json({ success: true, id: result.lastInsertRowid });
   } catch (error) {
-    console.error(`Error adding message to conversation ID ${params.id}:`, error);
+    console.error(`Error adding message to conversation ID ${resolvedParams.id}:`, error);
     return NextResponse.json({ error: 'Failed to add message' }, { status: 500 });
   }
 }
