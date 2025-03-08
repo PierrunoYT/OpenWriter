@@ -1,4 +1,3 @@
-import Database from 'better-sqlite3';
 import fs from 'fs';
 import path from 'path';
 
@@ -13,64 +12,36 @@ if (!fs.existsSync(dataDir)) {
   }
 }
 
-const dbPath = path.join(dataDir, 'conversations.db');
-console.log(`Database path: ${dbPath}`);
+// File-based storage paths
+const conversationsPath = path.join(dataDir, 'conversations.json');
+const messagesPath = path.join(dataDir, 'messages.json');
 
-let db: Database.Database;
+// Initialize storage if it doesn't exist
+if (!fs.existsSync(conversationsPath)) {
+  fs.writeFileSync(conversationsPath, JSON.stringify([]));
+}
 
-// Initialize database with retry logic to handle potential locking issues
-function initDb() {
+if (!fs.existsSync(messagesPath)) {
+  fs.writeFileSync(messagesPath, JSON.stringify([]));
+}
+
+// Helper function to read JSON data
+function readData(filePath: string): any[] {
   try {
-    // Add options for better compatibility on Windows systems
-    db = new Database(dbPath, {
-      verbose: console.log,
-      fileMustExist: false
-    });
-    
-    console.log('Successfully created database connection');
-    
-    // Create tables if they don't exist
-    db.exec(`
-      CREATE TABLE IF NOT EXISTS conversations (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        title TEXT NOT NULL,
-        created_at INTEGER NOT NULL,
-        updated_at INTEGER NOT NULL,
-        model TEXT NOT NULL,
-        system_prompt TEXT
-      );
-      
-      CREATE TABLE IF NOT EXISTS messages (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        conversation_id INTEGER NOT NULL,
-        role TEXT NOT NULL,
-        content TEXT NOT NULL,
-        created_at INTEGER NOT NULL,
-        FOREIGN KEY (conversation_id) REFERENCES conversations (id) ON DELETE CASCADE
-      );
-    `);
-    
-    return db;
+    const data = fs.readFileSync(filePath, 'utf8');
+    return JSON.parse(data);
   } catch (error) {
-    console.error('Error initializing database:', error);
-    console.error(`Database path: ${dbPath}`);
-    console.error(`Data directory exists: ${fs.existsSync(dataDir)}`);
-    throw error;
+    console.error(`Error reading data from ${filePath}:`, error);
+    return [];
   }
 }
 
-// Get database instance
-export function getDb(): Database.Database {
-  if (!db) {
-    return initDb();
-  }
-  return db;
-}
-
-// Close database connection
-export function closeDb() {
-  if (db) {
-    db.close();
+// Helper function to write JSON data
+function writeData(filePath: string, data: any): void {
+  try {
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+  } catch (error) {
+    console.error(`Error writing data to ${filePath}:`, error);
   }
 }
 
@@ -79,97 +50,92 @@ export const conversationsDb = {
   // Create a new conversation
   create: (title: string, model: string, systemPrompt: string) => {
     const timestamp = Date.now();
-    const db = getDb();
+    const conversations = readData(conversationsPath);
     
-    const stmt = db.prepare(`
-      INSERT INTO conversations (title, created_at, updated_at, model, system_prompt)
-      VALUES (?, ?, ?, ?, ?)
-    `);
+    // Generate a new ID (simulate auto-increment)
+    const maxId = conversations.length > 0 
+      ? Math.max(...conversations.map((c: any) => c.id))
+      : 0;
+    const newId = maxId + 1;
     
-    const result = stmt.run(title, timestamp, timestamp, model, systemPrompt);
-    return result.lastInsertRowid;
+    const newConversation = {
+      id: newId,
+      title,
+      created_at: timestamp,
+      updated_at: timestamp,
+      model,
+      system_prompt: systemPrompt
+    };
+    
+    conversations.push(newConversation);
+    writeData(conversationsPath, conversations);
+    
+    return newId;
   },
   
   // Get all conversations
   getAll: () => {
-    const db = getDb();
-    const stmt = db.prepare(`
-      SELECT * FROM conversations
-      ORDER BY updated_at DESC
-    `);
-    
-    return stmt.all();
+    const conversations = readData(conversationsPath);
+    // Sort by updated_at descending
+    return conversations.sort((a: any, b: any) => b.updated_at - a.updated_at);
   },
   
   // Get a conversation by ID
   get: (id: number) => {
-    const db = getDb();
-    const stmt = db.prepare(`
-      SELECT * FROM conversations
-      WHERE id = ?
-    `);
-    
-    return stmt.get(id);
+    const conversations = readData(conversationsPath);
+    return conversations.find((c: any) => c.id === id);
   },
   
   // Update a conversation
   update: (id: number, data: {title?: string, model?: string, systemPrompt?: string}) => {
-    const db = getDb();
+    const conversations = readData(conversationsPath);
     const timestamp = Date.now();
     
-    const sets = [];
-    const params = [];
+    const index = conversations.findIndex((c: any) => c.id === id);
+    if (index === -1) return false;
     
     if (data.title !== undefined) {
-      sets.push('title = ?');
-      params.push(data.title);
+      conversations[index].title = data.title;
     }
     
     if (data.model !== undefined) {
-      sets.push('model = ?');
-      params.push(data.model);
+      conversations[index].model = data.model;
     }
     
     if (data.systemPrompt !== undefined) {
-      sets.push('system_prompt = ?');
-      params.push(data.systemPrompt);
+      conversations[index].system_prompt = data.systemPrompt;
     }
     
-    sets.push('updated_at = ?');
-    params.push(timestamp);
+    conversations[index].updated_at = timestamp;
     
-    params.push(id);
-    
-    const stmt = db.prepare(`
-      UPDATE conversations
-      SET ${sets.join(', ')}
-      WHERE id = ?
-    `);
-    
-    return stmt.run(...params);
+    writeData(conversationsPath, conversations);
+    return true;
   },
   
   // Delete a conversation
   delete: (id: number) => {
-    const db = getDb();
+    const conversations = readData(conversationsPath);
+    const filteredConversations = conversations.filter((c: any) => c.id !== id);
     
-    const stmt = db.prepare(`
-      DELETE FROM conversations
-      WHERE id = ?
-    `);
+    if (filteredConversations.length === conversations.length) {
+      return false; // No conversation was deleted
+    }
     
-    return stmt.run(id);
+    writeData(conversationsPath, filteredConversations);
+    
+    // Also delete associated messages
+    const messages = readData(messagesPath);
+    const filteredMessages = messages.filter((m: any) => m.conversation_id !== id);
+    writeData(messagesPath, filteredMessages);
+    
+    return true;
   },
   
   // Delete all conversations
   deleteAll: () => {
-    const db = getDb();
-    
-    const stmt = db.prepare(`
-      DELETE FROM conversations
-    `);
-    
-    return stmt.run();
+    writeData(conversationsPath, []);
+    writeData(messagesPath, []); // Also clear all messages
+    return true;
   }
 };
 
@@ -177,42 +143,51 @@ export const conversationsDb = {
 export const messagesDb = {
   // Add a new message to a conversation
   add: (conversationId: number, role: string, content: string) => {
-    const db = getDb();
     const timestamp = Date.now();
     
     // Update the conversation's updated_at timestamp
-    const updateConversation = db.prepare(`
-      UPDATE conversations
-      SET updated_at = ?
-      WHERE id = ?
-    `);
-    updateConversation.run(timestamp, conversationId);
+    const conversations = readData(conversationsPath);
+    const conversationIndex = conversations.findIndex((c: any) => c.id === conversationId);
     
-    // Insert the new message
-    const stmt = db.prepare(`
-      INSERT INTO messages (conversation_id, role, content, created_at)
-      VALUES (?, ?, ?, ?)
-    `);
+    if (conversationIndex !== -1) {
+      conversations[conversationIndex].updated_at = timestamp;
+      writeData(conversationsPath, conversations);
+    }
     
-    return stmt.run(conversationId, role, content, timestamp);
+    // Add new message
+    const messages = readData(messagesPath);
+    
+    // Generate a new ID (simulate auto-increment)
+    const maxId = messages.length > 0 
+      ? Math.max(...messages.map((m: any) => m.id))
+      : 0;
+    const newId = maxId + 1;
+    
+    const newMessage = {
+      id: newId,
+      conversation_id: conversationId,
+      role,
+      content,
+      created_at: timestamp
+    };
+    
+    messages.push(newMessage);
+    writeData(messagesPath, messages);
+    
+    return true;
   },
   
   // Get all messages for a conversation
   getByConversation: (conversationId: number) => {
-    const db = getDb();
-    const stmt = db.prepare(`
-      SELECT * FROM messages
-      WHERE conversation_id = ?
-      ORDER BY created_at ASC
-    `);
-    
-    return stmt.all(conversationId);
+    const messages = readData(messagesPath);
+    return messages
+      .filter((m: any) => m.conversation_id === conversationId)
+      .sort((a: any, b: any) => a.created_at - b.created_at); // Sort by created_at ascending
   }
 };
 
+// No need for open/close database functions with file-based storage
 export default {
-  getDb,
-  closeDb,
   conversations: conversationsDb,
   messages: messagesDb
 };
