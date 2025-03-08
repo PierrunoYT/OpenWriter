@@ -587,7 +587,7 @@ export default function EditorPage() {
 
   return (
     <div 
-      className={`h-screen overflow-hidden flex flex-col bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 text-slate-800 dark:text-slate-100 ${theme === 'dark' ? 'theme-dark' : 'theme-light'}`}
+      className={`min-h-screen h-screen overflow-hidden flex flex-col bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 text-slate-800 dark:text-slate-100 ${theme === 'dark' ? 'theme-dark' : 'theme-light'}`}
       data-theme={theme}>
       {/* Header */}
       <header className={`flex-shrink-0 z-10 ${theme === 'dark' ? 'bg-slate-900/80' : 'bg-white/80'} backdrop-blur-sm border-b ${theme === 'dark' ? 'border-slate-700' : 'border-slate-200'} py-3 shadow-sm`}>
@@ -716,7 +716,7 @@ export default function EditorPage() {
         )}
         
         {/* Main Content Area */}
-        <main className={`flex-1 overflow-hidden p-4 ${showSidebar ? 'ml-0' : ''} flex flex-col`}>
+        <main className={`flex-1 overflow-hidden p-4 ${showSidebar ? 'ml-0' : ''} flex flex-col h-full`}>
         {/* App Controls */}
         <div className="mb-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm">
@@ -919,9 +919,9 @@ export default function EditorPage() {
         </div>
         
         {/* Main Content Area */}
-        <div className={`grid grid-cols-1 ${!isChatMode ? 'lg:grid-cols-2' : ''} gap-6 flex-1 overflow-hidden`}>
+        <div className={`grid grid-cols-1 ${!isChatMode ? 'lg:grid-cols-2' : ''} gap-6 flex-1 overflow-hidden h-full`}>
           {/* Input Section */}
-          <div className={`bg-white dark:bg-slate-800 rounded-xl shadow-sm overflow-hidden border border-slate-200 dark:border-slate-700 ${isChatMode ? 'h-full' : ''}`}>
+          <div className={`bg-white dark:bg-slate-800 rounded-xl shadow-sm overflow-hidden border border-slate-200 dark:border-slate-700 ${isChatMode ? 'h-full' : 'flex flex-col h-full'}`}>
             {isChatMode ? (
               <div className="flex flex-col h-full">
                 {/* Chat Message Display */}
@@ -1042,9 +1042,9 @@ export default function EditorPage() {
                 </div>
               </div>
             ) : (
-              <div className="h-full p-4">
+              <div className="flex flex-col h-full p-4">
                 <textarea
-                  className="w-full h-[500px] p-4 bg-slate-50 dark:bg-slate-800 border-0 focus:outline-none focus:ring-0 resize-none rounded-lg"
+                  className="w-full flex-1 p-4 bg-slate-50 dark:bg-slate-800 border-0 focus:outline-none focus:ring-0 resize-none rounded-lg"
                   placeholder="Write or paste your content here..."
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
@@ -1055,8 +1055,8 @@ export default function EditorPage() {
 
           {/* AI Response Section - Only show in editor mode */}
           {!isChatMode && (
-            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
-              <div className="border-b border-slate-200 dark:border-slate-700 px-4 py-3 flex justify-between items-center">
+            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col h-full">
+              <div className="border-b border-slate-200 dark:border-slate-700 px-4 py-3 flex justify-between items-center flex-shrink-0">
                 <h2 className="font-medium text-slate-800 dark:text-slate-200">AI Response</h2>
                 {aiResponse && !isLoading && (
                   <div className="flex items-center gap-2">
@@ -1092,7 +1092,7 @@ export default function EditorPage() {
                   </div>
                 )}
               </div>
-              <div className="p-4 h-[500px] overflow-y-auto bg-slate-50 dark:bg-slate-800">
+              <div className="p-4 flex-1 overflow-y-auto bg-slate-50 dark:bg-slate-800">
                 {isLoading ? (
                   <div className="flex items-center justify-center h-full">
                     <div className="flex flex-col items-center text-slate-400 dark:text-slate-500">
