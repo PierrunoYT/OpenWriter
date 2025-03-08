@@ -594,8 +594,8 @@ export default function EditorPage() {
             </span>
             
             {/* OpenRouter connection status moved next to logo */}
-            <div className="hidden md:flex items-center space-x-2 bg-slate-100 dark:bg-slate-800 rounded-full px-3 py-1 text-xs text-slate-600 dark:text-slate-300">
-              <span className="inline-block w-2 h-2 rounded-full bg-green-500"></span>
+            <div className="hidden md:flex items-center bg-slate-100 dark:bg-slate-800 rounded-full px-3 py-1 text-xs text-slate-600 dark:text-slate-300">
+              <span className="inline-block w-2 h-2 rounded-full bg-green-500 mr-2"></span>
               {loadingModels ? "Connecting..." : "OpenRouter"}
             </div>
           </div>
