@@ -1,10 +1,10 @@
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import { generateText, generateTextDirectAPI, getRateLimits } from '../../utils/openrouter';
 
 const router = express.Router();
 
 // Rate limit checking middleware for more expensive models
-const checkCreditsMiddleware = async (req, res, next) => {
+const checkCreditsMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   // Skip for non-generate routes
   if (!req.path.includes('/generate')) {
     return next();
@@ -50,7 +50,7 @@ const checkCreditsMiddleware = async (req, res, next) => {
   }
 };
 
-router.post('/generate', checkCreditsMiddleware, async (req, res) => {
+router.post('/generate', checkCreditsMiddleware, async (req: Request, res: Response): Promise<void> => {
   // Create AbortController for all requests
   const abortController = new AbortController();
   

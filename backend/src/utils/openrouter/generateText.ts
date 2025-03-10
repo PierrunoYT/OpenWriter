@@ -167,7 +167,7 @@ export async function generateText(
   messages: Message[],
   options: OpenRouterOptions = {},
   abortSignal?: AbortSignal
-) {
+): Promise<any> {
   try {
     const model = options.model || 'anthropic/claude-3.7-sonnet';
     const enableCaching = options.enableCaching !== undefined ? options.enableCaching : true;
