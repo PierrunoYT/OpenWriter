@@ -45,10 +45,11 @@ const checkCreditsMiddleware = async (req, res, next) => {
     // Continue processing
     next();
   } catch (error) {
-    // If we can't check credits, allow the request to proceed
-    // The actual API call will fail if there are credit issues
     console.error('Error checking credits:', error);
-    next();
+    res.status(500).json({
+      error: 'Internal server error checking credits',
+      type: 'server_error'
+    });
   }
 };
 
