@@ -286,11 +286,14 @@ export async function generateText(
     const completion = await openai.chat.completions.create(requestParams);
 
     if (completion.usage?.prompt_tokens !== undefined && 
-        completion.usage?.completion_tokens !== undefined &&
-        completion.usage?.cache_discount !== undefined) {
-      console.log(`Cache usage - Prompt tokens: ${completion.usage.prompt_tokens}, ` +
-                 `Completion tokens: ${completion.usage.completion_tokens}, ` +
-                 `Cache discount: ${completion.usage.cache_discount}`);
+        completion.usage?.completion_tokens !== undefined) {
+      console.log(`Usage - Prompt tokens: ${completion.usage.prompt_tokens}, ` +
+                 `Completion tokens: ${completion.usage.completion_tokens}`);
+      
+      // Log cache discount if available
+      if ('cache_discount' in completion.usage) {
+        console.log(`Cache discount: ${(completion.usage as any).cache_discount}`);
+      }
     }
 
     return completion;
