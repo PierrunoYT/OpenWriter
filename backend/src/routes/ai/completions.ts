@@ -1,11 +1,11 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import { generateTextCompletion, streamTextCompletion } from '../../utils/openrouter';
 
 const router = express.Router();
 
-router.post('/completions', async (req, res) => {
+router.post('/completions', async (req: Request, res: Response): Promise<void> => {
   // Create AbortController for all requests
-  const abortController = new AbortController();
+  const abortController: AbortController = new AbortController();
   
   // Handle client disconnect for cancelation
   req.on('close', () => {

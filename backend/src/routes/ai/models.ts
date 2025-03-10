@@ -1,10 +1,10 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import axios from 'axios';
 import { getRateLimits } from '../../utils/openrouter';
 
 const router = express.Router();
 
-router.get('/models', async (req, res) => {
+router.get('/models', async (req: Request, res: Response): Promise<void> => {
   try {
     // Debug log API key (masked for security)
     const apiKey = process.env.OPENROUTER_API_KEY || 'not-set';
@@ -171,7 +171,7 @@ router.get('/models', async (req, res) => {
   }
 });
 
-router.get('/models/:modelId', async (req, res) => {
+router.get('/models/:modelId', async (req: Request, res: Response): Promise<void> => {
   try {
     const { modelId } = req.params;
     
