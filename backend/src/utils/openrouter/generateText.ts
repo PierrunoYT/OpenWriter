@@ -163,6 +163,34 @@ function prepareMessagesWithCaching(messages: Message[], model: string, enableCa
   });
 }
 
+interface OpenRouterError {
+  status?: number;
+  statusCode?: number;
+  error?: {
+    message?: string;
+    metadata?: {
+      reasons?: string[];
+      flagged_input?: string;
+      provider_name?: string;
+      raw?: any;
+    };
+  };
+  response?: {
+    data?: {
+      error?: {
+        message?: string;
+        metadata?: {
+          reasons?: string[];
+          flagged_input?: string;
+          provider_name?: string;
+          raw?: any;
+        };
+      };
+    };
+  };
+  message?: string;
+}
+
 export async function generateText(
   messages: Message[],
   options: OpenRouterOptions = {},
@@ -297,21 +325,25 @@ export async function generateText(
     }
 
     return completion;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error calling OpenRouter API via OpenAI SDK:', error);
     
-    if (error.status || error.statusCode) {
-      const status = error.status || error.statusCode;
-      const errorData = error.error || error.response?.data;
+    const typedError = error as OpenRouterError;
+    
+    if (typedError.status || typedError.statusCode) {
+      const status = typedError.status || typedError.statusCode;
+      const errorData = typedError.error || typedError.response?.data;
       
-      const enhancedError: any = new Error(error.message || 'Unknown error');
+      const enhancedError: any = new Error(typedError.message || 'Unknown error');
       enhancedError.code = status;
       enhancedError.status = status;
       
-      if (errorData && errorData.error) {
+      if (errorData && 'error' in errorData) {
         const openRouterError = errorData.error;
-        enhancedError.message = openRouterError.message || error.message;
-        enhancedError.metadata = openRouterError.metadata;
+        if (openRouterError && typeof openRouterError === 'object') {
+          enhancedError.message = openRouterError.message || typedError.message;
+          enhancedError.metadata = openRouterError.metadata;
+        }
       }
       
       switch (status) {

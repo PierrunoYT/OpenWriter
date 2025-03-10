@@ -3,18 +3,31 @@ import { generateText } from '../../utils/openrouter';
 import { generateTextDirectAPI } from '../../utils/openrouter';
 import { getRateLimits } from '../../utils/openrouter';
 
+interface ErrorWithDetails {
+  type?: string;
+  code?: number;
+  status?: number;
+  message?: string;
+  reasons?: string[];
+  flagged_input?: string;
+  provider?: string;
+  raw_error?: any;
+}
+
 const router = express.Router();
 
 // Rate limit checking middleware for more expensive models
 const checkCreditsMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   // Skip for non-generate routes
   if (!req.path.includes('/generate')) {
-    return next();
+    next();
+    return;
   }
   
   // Skip for streaming requests as those have their own credit handling
   if (req.body.stream) {
-    return next();
+    next();
+    return;
   }
   
   try {
@@ -24,7 +37,8 @@ const checkCreditsMiddleware = async (req: Request, res: Response, next: NextFun
     
     // If it's a free model variant, let it pass through
     if (isFreeModel) {
-      return next();
+      next();
+      return;
     }
     
     // Check current credits
@@ -35,11 +49,12 @@ const checkCreditsMiddleware = async (req: Request, res: Response, next: NextFun
     
     // If user has no credits and is trying to use a paid model
     if (remainingCredits !== null && remainingCredits <= 0 && !rateLimitInfo.is_free_tier) {
-      return res.status(402).json({
+      res.status(402).json({
         error: 'Insufficient credits for this model. Please add credits to your OpenRouter account or use a free model variant.',
         type: 'insufficient_credits',
         remaining_credits: 0
       });
+      return;
     }
     
     // Continue processing
@@ -351,6 +366,8 @@ router.post('/generate', checkCreditsMiddleware, async (req: Request, res: Respo
         res.json(responseData);
       }
     } catch (error) {
+      const err = error as ErrorWithDetails;
+      
       // If aborted, don't try fallback
       if (abortController.signal.aborted) {
         clearTimeout(requestTimeout);
@@ -361,27 +378,27 @@ router.post('/generate', checkCreditsMiddleware, async (req: Request, res: Respo
       }
       
       // Handle enhanced errors
-      if (error.type || error.code) {
+      if (err.type || err.code) {
         clearTimeout(requestTimeout);
         
-        const statusCode = error.code || error.status || 500;
-        const errorType = error.type || 'unknown';
+        const statusCode = err.code || err.status || 500;
+        const errorType = err.type || 'unknown';
         
         const errorResponse: any = { 
-          error: error.message,
+          error: err.message,
           type: errorType
         };
         
         // Add additional details for moderation errors
-        if (errorType === 'moderation' && error.reasons) {
-          errorResponse.reasons = error.reasons;
-          errorResponse.flagged_input = error.flagged_input;
-          errorResponse.provider = error.provider;
+        if (errorType === 'moderation' && err.reasons) {
+          errorResponse.reasons = err.reasons;
+          errorResponse.flagged_input = err.flagged_input;
+          errorResponse.provider = err.provider;
         }
         
         // Add provider details for provider errors
-        if (errorType === 'provider_error' && error.provider) {
-          errorResponse.provider = error.provider;
+        if (errorType === 'provider_error' && err.provider) {
+          errorResponse.provider = err.provider;
         }
         
         if (!res.writableEnded) {
@@ -391,23 +408,23 @@ router.post('/generate', checkCreditsMiddleware, async (req: Request, res: Respo
       }
       
       // Handle string-based errors (fallback)
-      if (error.message && (
-          error.message.includes('Rate limit exceeded') ||
-          error.message.includes('Insufficient credits') ||
-          error.message.includes('API key error') ||
-          error.message.includes('timed out') ||
-          error.message.includes('provider is currently unavailable') ||
-          error.message.includes('No model provider available')
+      if (err.message && (
+          err.message.includes('Rate limit exceeded') ||
+          err.message.includes('Insufficient credits') ||
+          err.message.includes('API key error') ||
+          err.message.includes('timed out') ||
+          err.message.includes('provider is currently unavailable') ||
+          err.message.includes('No model provider available')
         )) {
         clearTimeout(requestTimeout);
         
         const statusCode = 
-          error.message.includes('Rate limit exceeded') ? 429 :
-          error.message.includes('Insufficient credits') ? 402 :
-          error.message.includes('API key error') ? 403 :
-          error.message.includes('timed out') ? 408 :
-          error.message.includes('provider is currently unavailable') ? 502 :
-          error.message.includes('No model provider available') ? 503 : 500;
+          err.message.includes('Rate limit exceeded') ? 429 :
+          err.message.includes('Insufficient credits') ? 402 :
+          err.message.includes('API key error') ? 403 :
+          err.message.includes('timed out') ? 408 :
+          err.message.includes('provider is currently unavailable') ? 502 :
+          err.message.includes('No model provider available') ? 503 : 500;
         
         const errorType = 
           statusCode === 429 ? 'rate_limit' :
@@ -419,7 +436,7 @@ router.post('/generate', checkCreditsMiddleware, async (req: Request, res: Respo
         
         if (!res.writableEnded) {
           res.status(statusCode).json({ 
-            error: error.message,
+            error: err.message,
             type: errorType
           });
         }
@@ -480,6 +497,7 @@ router.post('/generate', checkCreditsMiddleware, async (req: Request, res: Respo
         res.json(responseData);
       }
       } catch (fallbackError) {
+        const fbError = fallbackError as ErrorWithDetails;
         clearTimeout(requestTimeout);
         
         // Only respond if not aborted and connection is still open
@@ -487,12 +505,14 @@ router.post('/generate', checkCreditsMiddleware, async (req: Request, res: Respo
           console.error('Both API methods failed:', fallbackError);
           res.status(500).json({ 
             error: 'Failed to generate text with both methods',
-            details: fallbackError.message
+            details: fbError.message
           });
         }
       }
     }
   } catch (error) {
+    const err = error as ErrorWithDetails;
+    
     // Clear timeout in case of error
     clearTimeout(requestTimeout);
     
@@ -504,27 +524,27 @@ router.post('/generate', checkCreditsMiddleware, async (req: Request, res: Respo
     console.error('Error generating text:', error);
     
     // Handle enhanced errors
-    if (error.type || error.code) {
-      const statusCode = error.code || error.status || 500;
-      const errorType = error.type || 'unknown';
+    if (err.type || err.code) {
+      const statusCode = err.code || err.status || 500;
+      const errorType = err.type || 'unknown';
       
       const errorResponse: any = { 
-        error: error.message,
+        error: err.message,
         type: errorType
       };
       
       // Add additional details for moderation errors
-      if (errorType === 'moderation' && error.reasons) {
-        errorResponse.reasons = error.reasons;
-        errorResponse.flagged_input = error.flagged_input;
-        errorResponse.provider = error.provider;
+      if (errorType === 'moderation' && err.reasons) {
+        errorResponse.reasons = err.reasons;
+        errorResponse.flagged_input = err.flagged_input;
+        errorResponse.provider = err.provider;
       }
       
       // Add provider details for provider errors
-      if (errorType === 'provider_error' && error.provider) {
-        errorResponse.provider = error.provider;
-        if (error.raw_error) {
-          errorResponse.raw_provider_error = error.raw_error;
+      if (errorType === 'provider_error' && err.provider) {
+        errorResponse.provider = err.provider;
+        if (err.raw_error) {
+          errorResponse.raw_provider_error = err.raw_error;
         }
       }
       
@@ -534,7 +554,7 @@ router.post('/generate', checkCreditsMiddleware, async (req: Request, res: Respo
     
     // Generic error response
     res.status(500).json({ 
-      error: error.message || 'Failed to generate text',
+      error: err.message || 'Failed to generate text',
       type: 'server_error'
     });
   } finally {

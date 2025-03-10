@@ -2,11 +2,22 @@ import express, { Request, Response } from 'express';
 import { generateTextCompletion } from '../../utils/openrouter';
 import { streamTextCompletion } from '../../utils/openrouter';
 
+interface ErrorWithDetails {
+  type?: string;
+  code?: number;
+  status?: number;
+  message?: string;
+  reasons?: string[];
+  flagged_input?: string;
+  provider?: string;
+  raw_error?: any;
+}
+
 const router = express.Router();
 
-router.post('/completions', async (req: Request, res: Response): Promise<void> => {
+router.post('/completions', async (req: Request, res: Response) => {
   // Create AbortController for all requests
-  const abortController: AbortController = new AbortController();
+  const abortController = new AbortController();
   
   // Handle client disconnect for cancelation
   req.on('close', () => {
@@ -46,11 +57,13 @@ router.post('/completions', async (req: Request, res: Response): Promise<void> =
     
     // Validate required fields
     if (!model) {
-      return res.status(400).json({ error: 'Model is required', type: 'bad_request' });
+      res.status(400).json({ error: 'Model is required', type: 'bad_request' });
+      return;
     }
     
     if (!prompt) {
-      return res.status(400).json({ error: 'Prompt is required', type: 'bad_request' });
+      res.status(400).json({ error: 'Prompt is required', type: 'bad_request' });
+      return;
     }
     
     // Handle streaming requests
@@ -96,13 +109,13 @@ router.post('/completions', async (req: Request, res: Response): Promise<void> =
             max_price
           },
           res, // Pass response object for streaming
-          { signal: abortController.signal }
+          abortController.signal
         );
         
         // Streaming is handled by the function, cleanup on completion
         clearInterval(keepAliveInterval);
         clearTimeout(requestTimeout);
-      } catch (error) {
+      } catch (error: unknown) {
         // Cleanup resources
         clearInterval(keepAliveInterval);
         clearTimeout(requestTimeout);
@@ -112,12 +125,13 @@ router.post('/completions', async (req: Request, res: Response): Promise<void> =
           console.error('Streaming completion failed:', error);
           
           // Handle enhanced errors
-          if (error.type || error.code) {
-            const statusCode = error.code || error.status || 500;
+          const typedError = error as ErrorWithDetails;
+          if (typedError.type || typedError.code) {
+            const statusCode = typedError.code || typedError.status || 500;
             res.write(`data: ${JSON.stringify({ 
               error: { 
-                message: error.message,
-                type: error.type || 'unknown' 
+                message: typedError.message,
+                type: typedError.type || 'unknown' 
               } 
             })}\n\n`);
           } else {
@@ -165,7 +179,7 @@ router.post('/completions', async (req: Request, res: Response): Promise<void> =
       if (!res.writableEnded) {
         res.json(result);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       // Clear timeout
       clearTimeout(requestTimeout);
       
@@ -177,27 +191,28 @@ router.post('/completions', async (req: Request, res: Response): Promise<void> =
       console.error('Error generating text completion:', error);
       
       // Handle enhanced errors
-      if (error.type || error.code) {
-        const statusCode = error.code || error.status || 500;
-        const errorType = error.type || 'unknown';
+      const typedError = error as ErrorWithDetails;
+      if (typedError.type || typedError.code) {
+        const statusCode = typedError.code || typedError.status || 500;
+        const errorType = typedError.type || 'unknown';
         
         const errorResponse: any = { 
-          error: error.message,
+          error: typedError.message,
           type: errorType
         };
         
         // Add additional details for moderation errors
-        if (errorType === 'moderation' && error.reasons) {
-          errorResponse.reasons = error.reasons;
-          errorResponse.flagged_input = error.flagged_input;
-          errorResponse.provider = error.provider;
+        if (errorType === 'moderation' && typedError.reasons) {
+          errorResponse.reasons = typedError.reasons;
+          errorResponse.flagged_input = typedError.flagged_input;
+          errorResponse.provider = typedError.provider;
         }
         
         // Add provider details for provider errors
-        if (errorType === 'provider_error' && error.provider) {
-          errorResponse.provider = error.provider;
-          if (error.raw_error) {
-            errorResponse.raw_provider_error = error.raw_error;
+        if (errorType === 'provider_error' && typedError.provider) {
+          errorResponse.provider = typedError.provider;
+          if (typedError.raw_error) {
+            errorResponse.raw_provider_error = typedError.raw_error;
           }
         }
         
@@ -207,11 +222,11 @@ router.post('/completions', async (req: Request, res: Response): Promise<void> =
       
       // Generic error response
       res.status(500).json({ 
-        error: error.message || 'Failed to generate text completion',
+        error: typedError.message || 'Failed to generate text completion',
         type: 'server_error'
       });
     }
-  } catch (error) {
+  } catch (error: unknown) {
     // Clear timeout in case of error
     clearTimeout(requestTimeout);
     
