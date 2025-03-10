@@ -340,10 +340,10 @@ export default function EditorPage() {
         console.error(`API error: ${response.status}`);
         
         // Replace the "thinking" message with an error message
-        const errorMessages = [...updatedMessages, { 
+        const errorMessages: ChatMessage[] = [...updatedMessages, { 
           role: 'assistant', 
           content: `I'm sorry, but there was an error communicating with the AI (${response.status}). Please try again.` 
-        }];
+        } as ChatMessage];
         setChatMessages(errorMessages);
         return;
       }
@@ -357,10 +357,10 @@ export default function EditorPage() {
         console.error('Error parsing API response:', parseError);
         
         // Replace the "thinking" message with an error message
-        const errorMessages = [...updatedMessages, { 
+        const errorMessages: ChatMessage[] = [...updatedMessages, { 
           role: 'assistant', 
           content: 'Sorry, I received an invalid response from the server. Please try again.' 
-        }];
+        } as ChatMessage];
         setChatMessages(errorMessages);
         return;
       }
@@ -371,7 +371,7 @@ export default function EditorPage() {
         
         // Replace the "thinking" message with the actual response
         // Create the assistant message
-        const assistantMessage = { 
+        const assistantMessage: ChatMessage = { 
           role: 'assistant', 
           content: messageContent 
         };
@@ -391,20 +391,20 @@ export default function EditorPage() {
         console.error('Unexpected API response format:', data);
         
         // Replace the "thinking" message with an error message
-        const errorMessages = [...updatedMessages, { 
+        const errorMessages: ChatMessage[] = [...updatedMessages, { 
           role: 'assistant', 
           content: 'I received an unexpected response format. Please try again or contact support.' 
-        }];
+        } as ChatMessage];
         setChatMessages(errorMessages);
       }
     } catch (error) {
       console.error('Error sending chat message:', error);
       
       // Replace the "thinking" message with an error message
-      const errorMessages = [...updatedMessages, { 
+      const errorMessages: ChatMessage[] = [...updatedMessages, { 
         role: 'assistant', 
         content: 'Sorry, there was an error sending your message. Please try again.' 
-      }];
+      } as ChatMessage];
       setChatMessages(errorMessages);
     } finally {
       setIsLoading(false);
@@ -554,7 +554,7 @@ export default function EditorPage() {
         
         if (data.data && Array.isArray(data.data)) {
           // Transform the models to match our interface
-          const availableModels = data.data.map(model => ({
+          const availableModels = data.data.map((model: any) => ({
             id: model.id,
             name: model.name || model.id,
             description: model.description || '',
@@ -568,7 +568,7 @@ export default function EditorPage() {
           setModels(availableModels);
           
           // Set default model to Claude 3.7 Sonnet if available, otherwise first model
-          const defaultModel = availableModels.find(m => m.id === 'anthropic/claude-3.7-sonnet') || availableModels[0];
+          const defaultModel = availableModels.find((m: Model) => m.id === 'anthropic/claude-3.7-sonnet') || availableModels[0];
           if (defaultModel) {
             setSelectedModel(defaultModel.id);
           }
