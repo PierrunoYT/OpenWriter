@@ -274,6 +274,7 @@ export async function generateText(
       requestParams.max_price = options.max_price;
     }
     
+    // Handle abort signal if provided
     if (abortOptions?.signal) {
       requestParams.signal = abortOptions.signal;
     }

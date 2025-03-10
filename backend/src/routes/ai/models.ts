@@ -203,7 +203,7 @@ router.get('/models/:modelId', async (req: Request, res: Response): Promise<void
       if (model) {
         // If found, return as a single model response
         return res.json({ 
-           {
+          data: {
             ...model,
             supportsStructured: model.features?.includes('tools') || false
           }
