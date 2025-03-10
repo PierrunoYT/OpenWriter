@@ -166,7 +166,7 @@ function prepareMessagesWithCaching(messages: Message[], model: string, enableCa
 export async function generateText(
   messages: Message[],
   options: OpenRouterOptions = {},
-  abortSignal?: AbortSignal
+  abortOptions?: { signal?: AbortSignal }
 ): Promise<any> {
   try {
     const model = options.model || 'anthropic/claude-3.7-sonnet';
@@ -274,8 +274,8 @@ export async function generateText(
       requestParams.max_price = options.max_price;
     }
     
-    if (abortSignal) {
-      requestParams.signal = abortSignal;
+    if (abortOptions?.signal) {
+      requestParams.signal = abortOptions.signal;
     }
     
     if (options.stream) {

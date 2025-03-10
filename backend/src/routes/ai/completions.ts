@@ -1,5 +1,6 @@
 import express, { Request, Response } from 'express';
-import { generateTextCompletion, streamTextCompletion } from '../../utils/openrouter';
+import { generateTextCompletion } from '../../utils/openrouter';
+import { streamTextCompletion } from '../../utils/openrouter';
 
 const router = express.Router();
 
@@ -95,7 +96,7 @@ router.post('/completions', async (req: Request, res: Response): Promise<void> =
             max_price
           },
           res, // Pass response object for streaming
-          abortController.signal
+          { signal: abortController.signal }
         );
         
         // Streaming is handled by the function, cleanup on completion

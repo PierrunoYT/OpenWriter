@@ -1,7 +1,7 @@
 import express, { Request, Response, NextFunction } from 'express';
-import { generateText } from '../../utils/openrouter/generateText';
-import { generateTextDirectAPI } from '../../utils/openrouter/generateTextDirectAPI';
-import { getRateLimits } from '../../utils/openrouter/getRateLimits';
+import { generateText } from '../../utils/openrouter';
+import { generateTextDirectAPI } from '../../utils/openrouter';
+import { getRateLimits } from '../../utils/openrouter';
 
 const router = express.Router();
 
@@ -143,7 +143,7 @@ router.post('/chat/completions', checkCreditsMiddleware, async (req: Request, re
     req.url = '/generate';
     req.path = '/generate';
     req.originalUrl = req.originalUrl.replace('/chat/completions', '/generate');
-    return req.app._router.handle(generateRequest, res);
+    return req.app._router.handle(generateRequest, res, () => {});
   } catch (error) {
     console.error('Error in chat/completions route:', error);
     return res.status(500).json({ 

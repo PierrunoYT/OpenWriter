@@ -1,5 +1,7 @@
 import express, { Request, Response, NextFunction } from 'express';
-import { generateText, generateTextDirectAPI, getRateLimits } from '../../utils/openrouter';
+import { generateText } from '../../utils/openrouter';
+import { generateTextDirectAPI } from '../../utils/openrouter';
+import { getRateLimits } from '../../utils/openrouter';
 
 const router = express.Router();
 
@@ -179,7 +181,7 @@ router.post('/generate', checkCreditsMiddleware, async (req: Request, res: Respo
             stop,
             max_price
           },
-          abortController.signal // Pass the abort signal
+          { signal: abortController.signal } // Pass the abort signal
         );
         
         // Helper to send keep-alive comments
@@ -332,7 +334,7 @@ router.post('/generate', checkCreditsMiddleware, async (req: Request, res: Respo
           stop,
           max_price
         },
-        abortController.signal
+        { signal: abortController.signal }
       );
       
       // Clear timeout as request completed successfully
