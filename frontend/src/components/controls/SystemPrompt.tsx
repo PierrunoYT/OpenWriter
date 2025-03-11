@@ -1,8 +1,10 @@
-'use client';
+interface PresetPrompt {
+  id: string;
+  name: string;
+  prompt: string;
+}
 
-import { useState, useEffect } from 'react';
-
-export default function SystemPrompt({
+export function SystemPrompt({
   systemPrompt,
   setSystemPrompt,
   selectedPromptId,
@@ -13,7 +15,7 @@ export default function SystemPrompt({
   setSystemPrompt: (prompt: string) => void;
   selectedPromptId: string;
   setSelectedPromptId: (id: string) => void;
-  presetSystemPrompts: { id: string; name: string; prompt: string }[];
+  presetSystemPrompts: PresetPrompt[];
 }) {
   return (
     <div className="mt-3 bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-slate-200 dark:border-slate-700 animate-fadeIn">

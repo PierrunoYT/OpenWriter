@@ -1,7 +1,3 @@
-'use client';
-
-import { useState, useEffect } from 'react';
-
 interface Model {
   id: string;
   name: string;
@@ -15,7 +11,7 @@ interface Model {
   supportsStructured?: boolean;
 }
 
-export default function ModelSelector({
+export function ModelSelector({
   models,
   selectedModel,
   setSelectedModel,

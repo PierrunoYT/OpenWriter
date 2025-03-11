@@ -1,12 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import ThemeToggle from '@/components/ThemeToggle';
 import { useTheme } from '@/app/providers';
 import Chat from './components/Chat';
-import Editor from './components/Editor';
-import SystemPrompt from './components/SystemPrompt';
-import ModelSelector from './components/ModelSelector';
+import Header from '@/components/layout/Header';
+import Sidebar from '@/components/layout/Sidebar';
+import AppControls from '@/components/controls/AppControls';
 
 // Define types for models
 interface Model {
@@ -672,297 +671,59 @@ export default function EditorPage() {
     <div 
       className={`min-h-screen h-screen overflow-hidden flex flex-col bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 text-slate-800 dark:text-slate-100 ${theme === 'dark' ? 'theme-dark' : 'theme-light'}`}
       data-theme={theme}>
-      {/* Header */}
-      <header className={`flex-shrink-0 z-10 ${theme === 'dark' ? 'bg-slate-900/80' : 'bg-white/80'} backdrop-blur-sm border-b ${theme === 'dark' ? 'border-slate-700' : 'border-slate-200'} py-3 shadow-sm`}>
-        <div className="w-full px-6 flex justify-between items-center">
-          <div className="flex items-center">
-            <button 
-              onClick={() => setShowSidebar(!showSidebar)}
-              className={`flex items-center mr-4 px-3 py-1.5 text-sm text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 rounded-md transition-all duration-200 ease-in-out ${showSidebar ? 'bg-slate-100 dark:bg-slate-800' : 'bg-transparent'}`}
-              aria-label={showSidebar ? "Hide history" : "Show history"}
-              title={showSidebar ? "Hide chat history" : "Show chat history"}
-            >
-              <div className="relative w-[20px] h-[20px] mr-2">
-                {/* Custom sidebar toggle icon with animation */}
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`transition-all duration-200 ${showSidebar ? 'opacity-100 rotate-0' : 'opacity-0 rotate-90'} absolute top-0 left-0`}>
-                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                  <line x1="9" y1="3" x2="9" y2="21"></line>
-                </svg>
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`transition-all duration-200 ${showSidebar ? 'opacity-0 -rotate-90' : 'opacity-100 rotate-0'} absolute top-0 left-0`}>
-                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                  <path d="M15 3v18"></path>
-                </svg>
-              </div>
-              <span className="hidden sm:inline-block font-medium">
-                {showSidebar ? "Hide History" : "Show History"}
-              </span>
-            </button>
-            <span className="text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 mr-4">
-              OpenWriter
-            </span>
-            
-            {/* OpenRouter connection status moved next to logo */}
-            <div className="hidden md:flex items-center bg-slate-100 dark:bg-slate-800 rounded-full px-3 py-1 text-xs text-slate-600 dark:text-slate-300">
-              <span className="inline-block w-2 h-2 rounded-full bg-green-500 mr-2"></span>
-              {loadingModels ? "Connecting..." : "OpenRouter"}
-            </div>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            {/* Theme Toggle */}
-            <ThemeToggle />
-            
-            {/* GitHub icon with a better hover effect */}
-            <a 
-              href="https://github.com/yourhandle/openwriter" 
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-2 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
-              aria-label="View on GitHub"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
-              </svg>
-            </a>
-          </div>
-        </div>
-      </header>
+      <Header 
+        showSidebar={showSidebar}
+        setShowSidebar={setShowSidebar}
+        loadingModels={loadingModels}
+      />
 
       {/* Main Content with Sidebar */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Conversation Sidebar */}
-        {showSidebar && (
-          <aside className={`w-64 border-r ${theme === 'dark' ? 'border-slate-700 bg-slate-900' : 'border-slate-200 bg-white'} overflow-y-auto`}>
-            <div className="p-4">
-              <button
-                onClick={() => {
-                  setCurrentConversation(null);
-                  setChatMessages([]);
-                  setIsChatMode(true);
-                  // Don't reset the system prompt if a custom one is selected
-                  // We only need to reset selectedPromptId if it's tied to a conversation
-                  if (selectedPromptId === 'custom') {
-                    // Keep the current custom prompt
-                    console.log('Keeping custom prompt when starting new chat');
-                  } else {
-                    // Keep using the current selected preset
-                    console.log(`Keeping selected preset: ${selectedPromptId}`);
-                  }
-                }}
-                className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white py-2 px-3 rounded-lg flex items-center justify-center gap-2 transition-colors"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="12" y1="5" x2="12" y2="19"></line>
-                  <line x1="5" y1="12" x2="19" y2="12"></line>
-                </svg>
-                New Chat
-              </button>
-              
-              {conversations.length > 0 && (
-                <div className="mt-4">
-                  <div className="flex justify-between items-center mb-2">
-                    <h3 className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Recent conversations</h3>
-                    <button
-                      onClick={deleteAllConversations}
-                      className="text-xs text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
-                    >
-                      Clear All
-                    </button>
-                  </div>
-
-                  <div className="space-y-1 mt-2">
-                    {conversations.map((conversation) => (
-                      <div
-                        key={conversation.id}
-                        className={`group flex items-center justify-between rounded-md px-2 py-2 text-sm ${
-                          currentConversation === conversation.id
-                            ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
-                            : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
-                        }`}
-                      >
-                        <button
-                          onClick={() => fetchConversation(conversation.id)}
-                          className="flex-1 text-left truncate"
-                        >
-                          {conversation.title}
-                        </button>
-                        <button
-                          onClick={() => deleteConversation(conversation.id)}
-                          className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 dark:text-slate-500 dark:hover:text-red-400"
-                          aria-label="Delete conversation"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M3 6h18"></path>
-                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
-                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
-                          </svg>
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </aside>
+      <div className="flex flex-1 overflow-hidden">{showSidebar && (
+          <Sidebar
+            conversations={conversations}
+            currentConversation={currentConversation}
+            fetchConversation={fetchConversation}
+            deleteConversation={deleteConversation}
+            deleteAllConversations={deleteAllConversations}
+            setCurrentConversation={setCurrentConversation}
+            setChatMessages={setChatMessages}
+            setIsChatMode={setIsChatMode}
+            selectedPromptId={selectedPromptId}
+          />
         )}
+
         
         {/* Main Content Area */}
         <main className={`flex-1 overflow-hidden p-4 ${showSidebar ? 'ml-0' : ''} flex flex-col h-full`}>
-        {/* App Controls */}
-        <div className="mb-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm">
-            <div className="flex items-center gap-4">
-              {/* Mode Switcher */}
-              <div className="bg-slate-100 dark:bg-slate-700 rounded-lg p-1 flex">
-                <button
-                  onClick={() => setIsChatMode(false)}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                    !isChatMode 
-                      ? 'bg-white dark:bg-slate-600 text-blue-600 dark:text-blue-400 shadow-sm' 
-                      : 'text-slate-600 dark:text-slate-300 hover:bg-white/50 dark:hover:bg-slate-600/50'
-                  }`}
-                >
-                  Editor
-                </button>
-                <button
-                  onClick={() => setIsChatMode(true)}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                    isChatMode 
-                      ? 'bg-white dark:bg-slate-600 text-blue-600 dark:text-blue-400 shadow-sm' 
-                      : 'text-slate-600 dark:text-slate-300 hover:bg-white/50 dark:hover:bg-slate-600/50'
-                  }`}
-                >
-                  Chat
-                </button>
-              </div>
-              
-              {/* Model Selector */}
-              <ModelSelector
-                models={models}
-                selectedModel={selectedModel}
-                setSelectedModel={setSelectedModel}
-                loadingModels={loadingModels}
-                setUseStructuredOutput={setUseStructuredOutput}
-              />
-            </div>
-            
-            <div className="flex flex-wrap items-center gap-4">
-              {/* System Prompt Button */}
-              <button
-                onClick={() => setShowSystemPrompt(!showSystemPrompt)}
-                className={`flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg transition-colors ${
-                  showSystemPrompt 
-                    ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' 
-                    : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
-                }`}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
-                  <path d="M2 17l10 5 10-5"></path>
-                  <path d="M2 12l10 5 10-5"></path>
-                </svg>
-                System Prompt
-              </button>
-              
-              {/* Additional Options */}
-              <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-700 px-3 py-1.5 rounded-lg">
-                <input
-                  type="checkbox"
-                  id="cachingToggle"
-                  checked={enableCaching}
-                  onChange={(e) => setEnableCaching(e.target.checked)}
-                  className="h-4 w-4 text-blue-600 dark:text-blue-500 focus:ring-blue-500 dark:focus:ring-blue-400 rounded border-slate-300 dark:border-slate-600"
-                />
-                <label htmlFor="cachingToggle" className="text-sm text-slate-700 dark:text-slate-300 whitespace-nowrap">
-                  Enable caching
-                </label>
-              </div>
-              
-              {/* Structured Output - Only in editor mode */}
-              {!isChatMode && (
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="structuredToggle"
-                      checked={useStructuredOutput}
-                      onChange={(e) => setUseStructuredOutput(e.target.checked)}
-                      disabled={loadingModels || !models.find(m => m.id === selectedModel)?.supportsStructured}
-                      className="h-4 w-4 text-blue-600 dark:text-blue-500 focus:ring-blue-500 dark:focus:ring-blue-400 rounded border-slate-300 dark:border-slate-600
-                                disabled:opacity-50 disabled:cursor-not-allowed"
-                    />
-                    <label 
-                      htmlFor="structuredToggle" 
-                      className={`text-sm whitespace-nowrap ${
-                        loadingModels || !models.find(m => m.id === selectedModel)?.supportsStructured 
-                          ? 'text-slate-400 dark:text-slate-500' 
-                          : 'text-slate-700 dark:text-slate-300'
-                      }`}
-                    >
-                      Format
-                    </label>
-                  </div>
-                  
-                  {useStructuredOutput && (
-                    <select
-                      className="bg-slate-100 dark:bg-slate-700 border-0 text-slate-800 dark:text-slate-200 text-sm rounded-lg py-1.5 px-3 appearance-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:outline-none"
-                      value={outputFormat}
-                      onChange={(e) => setOutputFormat(e.target.value)}
-                    >
-                      {outputFormats.map((format) => (
-                        <option key={format.id} value={format.id}>
-                          {format.name}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                </div>
-              )}
-              
-              {/* Generate button - Only in editor mode */}
-              {!isChatMode && (
-                <button
-                  onClick={handleGenerateContent}
-                  disabled={isLoading || !content.trim() || loadingModels}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                    isLoading || !content.trim() || loadingModels 
-                      ? 'bg-blue-500/60 text-white cursor-not-allowed' 
-                      : 'bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white shadow-sm'
-                  }`}
-                >
-                  {isLoading ? (
-                    <span className="flex items-center gap-2">
-                      <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Generating...
-                    </span>
-                  ) : (
-                    'Generate'
-                  )}
-                </button>
-              )}
-            </div>
-          </div>
-          
-          {/* System Prompt Panel */}
-          {showSystemPrompt && (
-            <SystemPrompt
-              systemPrompt={systemPrompt}
-              setSystemPrompt={setSystemPrompt}
-              selectedPromptId={selectedPromptId}
-              setSelectedPromptId={setSelectedPromptId}
-              presetSystemPrompts={presetSystemPrompts}
-            />
-          )}
-        </div>
-        
-        {/* Main Content Area */}
-        <div className={`grid grid-cols-1 ${!isChatMode ? 'lg:grid-cols-2' : ''} gap-6 flex-1 overflow-hidden h-full`}>
-          {/* Input Section */}
-          <div className={`bg-white dark:bg-slate-800 rounded-xl shadow-sm overflow-hidden border border-slate-200 dark:border-slate-700 ${isChatMode ? 'h-full' : 'flex flex-col h-full'}`}>
-            {isChatMode ? (
+          <AppControls
+            isChatMode={isChatMode}
+            setIsChatMode={setIsChatMode}
+            models={models}
+            selectedModel={selectedModel}
+            setSelectedModel={setSelectedModel}
+            loadingModels={loadingModels}
+            setUseStructuredOutput={setUseStructuredOutput}
+            showSystemPrompt={showSystemPrompt}
+            setShowSystemPrompt={setShowSystemPrompt}
+            enableCaching={enableCaching}
+            setEnableCaching={setEnableCaching}
+            useStructuredOutput={useStructuredOutput}
+            outputFormat={outputFormat}
+            setOutputFormat={setOutputFormat}
+            handleGenerateContent={handleGenerateContent}
+            isLoading={isLoading}
+            content={content}
+            outputFormats={outputFormats}
+            systemPrompt={systemPrompt}
+            setSystemPrompt={setSystemPrompt}
+            selectedPromptId={selectedPromptId}
+            setSelectedPromptId={setSelectedPromptId}
+            presetSystemPrompts={presetSystemPrompts}
+          />
+
+          {/* Main Content Area */}
+          <div className="flex-1 overflow-hidden h-full">
+            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm overflow-hidden border border-slate-200 dark:border-slate-700 h-full">
               <Chat
                 content={content}
                 setContent={setContent}
@@ -979,133 +740,11 @@ export default function EditorPage() {
                 saveMessage={saveMessage}
                 createConversation={createConversation}
                 API_BASE_URL={API_BASE_URL}
+                handleChatSend={handleChatSend}
+                handleGenerateContent={handleGenerateContent}
               />
-            ) : (
-              <Editor
-                content={content}
-                setContent={setContent}
-                aiResponse={aiResponse}
-                setAiResponse={setAiResponse}
-                isLoading={isLoading}
-                setIsLoading={setIsLoading}
-                selectedModel={selectedModel}
-                systemPrompt={systemPrompt}
-                chatMessages={chatMessages}
-                setChatMessages={setChatMessages}
-                currentConversation={currentConversation}
-                setCurrentConversation={setCurrentConversation}
-                API_BASE_URL={API_BASE_URL}
-              />
-            )}
-          </div>
-
-          {/* AI Response Section - Only show in editor mode */}
-          {!isChatMode && (
-            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col h-full">
-              <div className="border-b border-slate-200 dark:border-slate-700 px-4 py-3 flex justify-between items-center flex-shrink-0">
-                <h2 className="font-medium text-slate-800 dark:text-slate-200">AI Response</h2>
-                {aiResponse && !isLoading && (
-                  <div className="flex items-center gap-2">
-                    <button 
-                      onClick={() => {
-                        navigator.clipboard.writeText(aiResponse);
-                        setCopyState('copied');
-                        setTimeout(() => setCopyState('default'), 2000);
-                      }}
-                      className={`text-xs flex items-center gap-1 px-2 py-1 rounded transition-colors ${
-                        copyState === 'copied' 
-                          ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' 
-                          : 'text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 bg-slate-100 dark:bg-slate-700'
-                      }`}
-                    >
-                      {copyState === 'copied' ? (
-                        <>
-                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="20 6 9 17 4 12"></polyline>
-                          </svg>
-                          Copied!
-                        </>
-                      ) : (
-                        <>
-                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                          </svg>
-                          Copy
-                        </>
-                      )}
-                    </button>
-                  </div>
-                )}
-              </div>
-              <div className="p-4 flex-1 overflow-y-auto bg-slate-50 dark:bg-slate-800">
-                {isLoading ? (
-                  <div className="flex items-center justify-center h-full">
-                    <div className="flex flex-col items-center text-slate-400 dark:text-slate-500">
-                      <svg className="animate-spin h-8 w-8 mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      <div>Generating response<span className="animate-dots">...</span></div>
-                    </div>
-                  </div>
-                ) : aiResponse ? (
-                  <div className="prose dark:prose-invert max-w-none prose-sm md:prose-base">
-                    {outputFormat === 'json' || aiResponse.startsWith('{') || aiResponse.startsWith('[') ? (
-                      <pre className="bg-slate-100 dark:bg-slate-700 p-4 rounded-lg overflow-auto text-sm">
-                        <code className="text-slate-800 dark:text-slate-200">{aiResponse}</code>
-                      </pre>
-                    ) : (
-                      <div className="whitespace-pre-wrap text-slate-800 dark:text-slate-200 space-y-4">
-                        {outputFormat === 'email' || (aiResponse.includes('Subject:') && aiResponse.includes('Dear')) ? (
-                          <div className="border border-slate-200 dark:border-slate-600 rounded-lg p-5 bg-white dark:bg-slate-900 shadow-sm relative group">
-                            <button 
-                              onClick={() => {
-                                navigator.clipboard.writeText(aiResponse);
-                                setCopyState('copied');
-                                setTimeout(() => setCopyState('default'), 2000);
-                              }}
-                              className="absolute top-2 right-2 bg-white dark:bg-slate-800 text-blue-500 dark:text-blue-400 
-                                        p-1 rounded-full shadow-sm border border-slate-200 dark:border-slate-700 
-                                        opacity-0 group-hover:opacity-100 transition-opacity"
-                              title="Copy email"
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                              </svg>
-                            </button>
-                            {aiResponse}
-                          </div>
-                        ) : outputFormat === 'bullet-points' ? (
-                          <div>
-                            {aiResponse.split('\n').map((line, idx) => (
-                              <div key={idx} className={line.trim().startsWith('-') || line.trim().startsWith('•') ? 'ml-4' : ''}>
-                                {line}
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          aiResponse
-                        )}
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="text-slate-400 dark:text-slate-500 h-full flex items-center justify-center flex-col">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="mb-4 opacity-50">
-                      <circle cx="12" cy="12" r="10"></circle>
-                      <path d="M8 12h8"></path>
-                      <path d="M12 8v8"></path>
-                    </svg>
-                    <p className="text-center font-light">AI response will appear here</p>
-                    <p className="text-center text-sm mt-2 max-w-md">Type your text in the editor and click "Generate" to create content</p>
-                  </div>
-                )}
-              </div>
             </div>
-          )}
-        </div>
+          </div>
         </main>
       </div>
       
