@@ -50,32 +50,6 @@ export default function EditorPage() {
   const [newConversationTitle, setNewConversationTitle] = useState<string>('');
   const [isCreatingConversation, setIsCreatingConversation] = useState<boolean>(false);
 
-  // Debug theme changes
-  useEffect(() => {
-    console.log('Current theme in main component:', theme);
-    
-    // Force HTML class update to match theme
-    const html = document.documentElement;
-    html.classList.remove('light', 'dark');
-    if (theme === 'dark') {
-      html.classList.add('dark');
-    } else if (theme === 'light') {
-      html.classList.add('light');
-    } else if (theme === 'system') {
-      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches
-        ? 'dark'
-        : 'light';
-      html.classList.add(systemTheme);
-    }
-  }, [theme]);
-
-  // Save system prompt and selected ID to localStorage when they change
-  useEffect(() => {
-    localStorage.setItem('systemPrompt', systemPrompt);
-    localStorage.setItem('selectedPromptId', selectedPromptId);
-    console.log(`Saved prompt settings to localStorage: ${selectedPromptId}`);
-  }, [systemPrompt, selectedPromptId]);
-
   // Fetch all conversations
   const fetchConversations = async () => {
     try {
@@ -83,12 +57,13 @@ export default function EditorPage() {
       if (!response.ok) throw new Error('Failed to fetch conversations');
       
       const data = await response.json();
+      console.log('Fetched conversations:', data);
       setConversations(data.conversations || []);
     } catch (error) {
       console.error('Error fetching conversations:', error);
     }
   };
-  
+
   // Fetch a specific conversation
   const fetchConversation = async (id: number) => {
     try {
@@ -99,11 +74,17 @@ export default function EditorPage() {
       
       // Debug log
       console.log('Conversation data received:', data);
-      console.log('Messages in the conversation:', data.messages);
+      
+      // Fetch messages for this conversation
+      const messagesResponse = await fetch(`/api/conversations/${id}/messages`);
+      if (!messagesResponse.ok) throw new Error('Failed to fetch conversation messages');
+      
+      const messagesData = await messagesResponse.json();
+      console.log('Messages in the conversation:', messagesData);
       
       // Update UI with conversation data
       setCurrentConversation(id);
-      setChatMessages(data.messages ? data.messages.map((msg: any) => ({
+      setChatMessages(messagesData.messages ? messagesData.messages.map((msg: any) => ({
         role: msg.role,
         content: msg.content
       })) : []);
@@ -132,7 +113,154 @@ export default function EditorPage() {
       console.error(`Error fetching conversation ${id}:`, error);
     }
   };
-  
+
+  // Handle sending a chat message
+  const handleChatSend = async () => {
+    if (!content.trim()) return;
+    
+    // Add user message to chat
+    const userMessage: ChatMessage = { role: 'user', content };
+    const updatedMessages = [...chatMessages, userMessage];
+    setChatMessages(updatedMessages);
+    setContent(''); // Clear input
+    setIsLoading(true);
+
+    try {
+      let conversationId = currentConversation;
+
+      // Always create a new conversation if we don't have one
+      if (!conversationId) {
+        console.log('No active conversation, creating a new one');
+        const defaultTitle = userMessage.content.substring(0, 30) + (userMessage.content.length > 30 ? '...' : '');
+        conversationId = await createConversation(defaultTitle);
+        console.log('Created new conversation with ID:', conversationId);
+        if (conversationId) {
+          setCurrentConversation(conversationId);
+          // Refresh the conversations list to show the new one
+          await fetchConversations();
+        }
+      }
+
+      // Save user message to the conversation
+      console.log('About to save user message, conversation ID:', conversationId);
+      if (conversationId) {
+        await saveMessage('user', userMessage.content);
+      } else {
+        console.error('Failed to establish conversation ID before saving message');
+      }
+
+      // Add a temporary "thinking" message that will be replaced
+      const thinkingMessage: ChatMessage = { 
+        role: 'assistant', 
+        content: 'Thinking...' 
+      };
+      setChatMessages([...updatedMessages, thinkingMessage]);
+      
+      try {
+        // Prepare all messages for context
+        const messagesForAPI = [
+          { role: 'system', content: systemPrompt },
+          ...updatedMessages // Include conversation history
+        ];
+        
+        console.log('Sending chat message with system prompt and user message');
+        
+        const response = await fetch(`${API_BASE_URL}/chat/completions`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.NEXT_PUBLIC_OPENROUTER_API_KEY}`,
+            'HTTP-Referer': 'https://openwriter.app',
+            'X-Title': 'OpenWriter'
+          },
+          body: JSON.stringify({
+            messages: messagesForAPI,
+            model: selectedModel,
+            temperature: 0.7,
+            max_tokens: 1000
+          }),
+        });
+        
+        // Handle various error cases
+        if (!response.ok) {
+          console.error(`API error: ${response.status}`);
+          
+          // Replace the "thinking" message with an error message
+          const errorMessages: ChatMessage[] = [...updatedMessages, { 
+            role: 'assistant', 
+            content: `I'm sorry, but there was an error communicating with the AI (${response.status}). Please try again.` 
+          } as ChatMessage];
+          setChatMessages(errorMessages);
+          return;
+        }
+        
+        // Parse the response
+        let data;
+        try {
+          const textResponse = await response.text();
+          data = JSON.parse(textResponse);
+        } catch (parseError) {
+          console.error('Error parsing API response:', parseError);
+          
+          // Replace the "thinking" message with an error message
+          const errorMessages: ChatMessage[] = [...updatedMessages, { 
+            role: 'assistant', 
+            content: 'Sorry, I received an invalid response from the server. Please try again.' 
+          } as ChatMessage];
+          setChatMessages(errorMessages);
+          return;
+        }
+        
+        // Get the assistant's response
+        if (data.choices && data.choices.length > 0) {
+          const messageContent = data.choices[0].message?.content || '';
+          
+          // Replace the "thinking" message with the actual response
+          // Create the assistant message
+          const assistantMessage: ChatMessage = { 
+            role: 'assistant', 
+            content: messageContent 
+          };
+          
+          // Update the chat UI
+          const responseMessages = [...updatedMessages, assistantMessage];
+          setChatMessages(responseMessages);
+          
+          // Save the assistant message to the conversation
+          if (currentConversation) {
+            console.log(`Saving assistant response to conversation ${currentConversation}`);
+            await saveMessage('assistant', messageContent);
+          } else {
+            console.error('No active conversation ID when trying to save assistant response');
+          }
+        } else {
+          console.error('Unexpected API response format:', data);
+          
+          // Replace the "thinking" message with an error message
+          const errorMessages: ChatMessage[] = [...updatedMessages, { 
+            role: 'assistant', 
+            content: 'I received an unexpected response format. Please try again or contact support.' 
+          } as ChatMessage];
+          setChatMessages(errorMessages);
+        }
+      } catch (error) {
+        console.error('Error sending chat message:', error);
+        
+        // Replace the "thinking" message with an error message
+        const errorMessages: ChatMessage[] = [...updatedMessages, { 
+          role: 'assistant', 
+          content: 'Sorry, there was an error sending your message. Please try again.' 
+        } as ChatMessage];
+        setChatMessages(errorMessages);
+      } finally {
+        setIsLoading(false);
+      }
+    } catch (error) {
+      console.error('Error in conversation/message setup:', error);
+    }
+    
+  };
+
   // Create a new conversation
   const createConversation = async (title: string) => {
     try {
@@ -157,14 +285,14 @@ export default function EditorPage() {
       const data = await response.json();
       console.log(`Conversation created with ID:`, data.id);
       
-      // Set as current conversation immediately, before refreshing list
+      // Set as current conversation immediately
       const newConversationId = Number(data.id);
       setCurrentConversation(newConversationId);
       
       // Clear messages for new conversation
       setChatMessages([]);
       
-      // Refresh conversations
+      // Refresh conversations list
       await fetchConversations();
       
       setNewConversationTitle('');
@@ -264,148 +392,6 @@ export default function EditorPage() {
     }
   };
 
-  // Handle sending a chat message
-  const handleChatSend = async () => {
-    if (!content.trim()) return;
-    
-    // Add user message to chat
-    const userMessage: ChatMessage = { role: 'user', content };
-    const updatedMessages = [...chatMessages, userMessage];
-    setChatMessages(updatedMessages);
-    setContent(''); // Clear input
-    setIsLoading(true);
-    
-    try {
-      let conversationId = currentConversation;
-      
-      // If we don't have an active conversation yet, create one with default title
-      if (!conversationId) {
-        console.log('No active conversation, creating a new one');
-        const defaultTitle = userMessage.content.substring(0, 30) + (userMessage.content.length > 30 ? '...' : '');
-        conversationId = await createConversation(defaultTitle);
-        console.log('Created new conversation with ID:', conversationId);
-      } else {
-        console.log('Using existing conversation:', conversationId);
-      }
-      
-      // Save user message to the conversation
-      console.log('About to save user message, conversation ID:', conversationId);
-      if (conversationId) {
-        await saveMessage('user', userMessage.content);
-      } else {
-        console.error('Failed to establish conversation ID before saving message');
-      }
-    } catch (error) {
-      console.error('Error in conversation/message setup:', error);
-    }
-    
-    // Add a temporary "thinking" message that will be replaced
-    const thinkingMessage: ChatMessage = { 
-      role: 'assistant', 
-      content: 'Thinking...' 
-    };
-    setChatMessages([...updatedMessages, thinkingMessage]);
-    
-    try {
-      // Prepare all messages for context
-      const messagesForAPI = [
-        { role: 'system', content: systemPrompt },
-        ...updatedMessages // Include conversation history
-      ];
-      
-      console.log('Sending chat message with system prompt and user message');
-      
-      const response = await fetch(`${API_BASE_URL}/chat/completions`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_OPENROUTER_API_KEY}`,
-          'HTTP-Referer': 'https://openwriter.app',
-          'X-Title': 'OpenWriter'
-        },
-        body: JSON.stringify({
-          messages: messagesForAPI,
-          model: selectedModel,
-          temperature: 0.7,
-          max_tokens: 1000
-        }),
-      });
-      
-      // Handle various error cases
-      if (!response.ok) {
-        console.error(`API error: ${response.status}`);
-        
-        // Replace the "thinking" message with an error message
-        const errorMessages: ChatMessage[] = [...updatedMessages, { 
-          role: 'assistant', 
-          content: `I'm sorry, but there was an error communicating with the AI (${response.status}). Please try again.` 
-        } as ChatMessage];
-        setChatMessages(errorMessages);
-        return;
-      }
-      
-      // Parse the response
-      let data;
-      try {
-        const textResponse = await response.text();
-        data = JSON.parse(textResponse);
-      } catch (parseError) {
-        console.error('Error parsing API response:', parseError);
-        
-        // Replace the "thinking" message with an error message
-        const errorMessages: ChatMessage[] = [...updatedMessages, { 
-          role: 'assistant', 
-          content: 'Sorry, I received an invalid response from the server. Please try again.' 
-        } as ChatMessage];
-        setChatMessages(errorMessages);
-        return;
-      }
-      
-      // Get the assistant's response
-      if (data.choices && data.choices.length > 0) {
-        const messageContent = data.choices[0].message?.content || '';
-        
-        // Replace the "thinking" message with the actual response
-        // Create the assistant message
-        const assistantMessage: ChatMessage = { 
-          role: 'assistant', 
-          content: messageContent 
-        };
-        
-        // Update the chat UI
-        const responseMessages = [...updatedMessages, assistantMessage];
-        setChatMessages(responseMessages);
-        
-        // Save the assistant message to the conversation
-        if (currentConversation) {
-          console.log(`Saving assistant response to conversation ${currentConversation}`);
-          await saveMessage('assistant', messageContent);
-        } else {
-          console.error('No active conversation ID when trying to save assistant response');
-        }
-      } else {
-        console.error('Unexpected API response format:', data);
-        
-        // Replace the "thinking" message with an error message
-        const errorMessages: ChatMessage[] = [...updatedMessages, { 
-          role: 'assistant', 
-          content: 'I received an unexpected response format. Please try again or contact support.' 
-        } as ChatMessage];
-        setChatMessages(errorMessages);
-      }
-    } catch (error) {
-      console.error('Error sending chat message:', error);
-      
-      // Replace the "thinking" message with an error message
-      const errorMessages: ChatMessage[] = [...updatedMessages, { 
-        role: 'assistant', 
-        content: 'Sorry, there was an error sending your message. Please try again.' 
-      } as ChatMessage];
-      setChatMessages(errorMessages);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleGenerateContent = async () => {
     setIsLoading(true);

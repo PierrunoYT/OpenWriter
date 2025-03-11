@@ -7,25 +7,16 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    // Ensure params is awaited before accessing its properties
-    const resolvedParams = await params;
-    const id = parseInt(resolvedParams.id);
+    const id = parseInt(params.id);
     
     if (isNaN(id)) {
       return NextResponse.json({ error: 'Invalid conversation ID' }, { status: 400 });
     }
     
-    const conversation = db.conversations.get(id);
-    
-    if (!conversation) {
-      return NextResponse.json({ error: 'Conversation not found' }, { status: 404 });
-    }
-    
     const messages = db.messages.getByConversation(id);
-    
     return NextResponse.json({ messages });
   } catch (error) {
-    console.error(`Error fetching messages for conversation ID ${resolvedParams.id}:`, error);
+    console.error('Error fetching messages:', error);
     return NextResponse.json({ error: 'Failed to fetch messages' }, { status: 500 });
   }
 }
@@ -36,9 +27,7 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
-    // Ensure params is awaited before accessing its properties
-    const resolvedParams = await params;
-    const id = parseInt(resolvedParams.id);
+    const id = parseInt(params.id);
     
     if (isNaN(id)) {
       return NextResponse.json({ error: 'Invalid conversation ID' }, { status: 400 });
@@ -58,9 +47,16 @@ export async function POST(
     
     const result = db.messages.add(id, role, content);
     
+    // Update the conversation's timestamp by passing title to trigger an update
+    db.conversations.update(id, { title: conversation.title });
+    
+    if (!result) {
+      return NextResponse.json({ error: 'Failed to add message' }, { status: 500 });
+    }
+    
     return NextResponse.json({ success: true, id: result.lastInsertRowid });
   } catch (error) {
-    console.error(`Error adding message to conversation ID ${resolvedParams.id}:`, error);
+    console.error('Error adding message:', error);
     return NextResponse.json({ error: 'Failed to add message' }, { status: 500 });
   }
 }

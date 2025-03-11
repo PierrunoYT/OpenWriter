@@ -22,7 +22,9 @@ export async function POST(request: NextRequest) {
     }
     
     const conversationId = db.conversations.create(title, model, systemPrompt || '');
-    return NextResponse.json({ id: conversationId });
+    const conversation = db.conversations.get(conversationId);
+    
+    return NextResponse.json({ id: conversationId, conversation });
   } catch (error) {
     console.error('Error creating conversation:', error);
     return NextResponse.json({ error: 'Failed to create conversation' }, { status: 500 });
