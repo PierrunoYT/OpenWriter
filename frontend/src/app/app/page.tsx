@@ -7,6 +7,7 @@ import Chat from './components/Chat';
 import Editor from './components/Editor';
 import SystemPrompt from './components/SystemPrompt';
 import ModelSelector from './components/ModelSelector';
+import Slides from './components/Slides';
 
 // Define types for models
 interface Model {
@@ -833,6 +834,16 @@ export default function EditorPage() {
                   }`}
                 >
                   Chat
+                </button>
+                <button
+                  onClick={() => setIsChatMode(false)}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                    !isChatMode 
+                      ? 'bg-white dark:bg-slate-600 text-blue-600 dark:text-blue-400 shadow-sm' 
+                      : 'text-slate-600 dark:text-slate-300 hover:bg-white/50 dark:hover:bg-slate-600/50'
+                  }`}
+                >
+                  Slides
                 </button>
               </div>
               
