@@ -3,9 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useTheme } from '@/app/providers';
 import Chat from './components/Chat';
-import Header from '@/components/layout/Header';
-import Sidebar from '@/components/layout/Sidebar';
-import AppControls from '@/components/controls/AppControls';
+import Header from '../../components/layout/Header';
+import Sidebar from '../../components/layout/Sidebar';
+import AppControls from '../../components/controls/AppControls';
 
 // Define types for models
 interface Model {
@@ -40,7 +40,6 @@ export default function EditorPage() {
   const [systemPrompt, setSystemPrompt] = useState<string>('You are a helpful writing assistant.');
   const [selectedPromptId, setSelectedPromptId] = useState<string>('default');
   const [showSystemPrompt, setShowSystemPrompt] = useState<boolean>(false);
-  const [isChatMode, setIsChatMode] = useState<boolean>(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [copyState, setCopyState] = useState<'default' | 'copied'>('default');
   
@@ -129,8 +128,6 @@ export default function EditorPage() {
         setSelectedModel(data.conversation.model);
       }
       
-      // Ensure we're in chat mode
-      setIsChatMode(true);
     } catch (error) {
       console.error(`Error fetching conversation ${id}:`, error);
     }
@@ -687,7 +684,6 @@ export default function EditorPage() {
             deleteAllConversations={deleteAllConversations}
             setCurrentConversation={setCurrentConversation}
             setChatMessages={setChatMessages}
-            setIsChatMode={setIsChatMode}
             selectedPromptId={selectedPromptId}
           />
         )}
@@ -696,8 +692,6 @@ export default function EditorPage() {
         {/* Main Content Area */}
         <main className={`flex-1 overflow-hidden p-4 ${showSidebar ? 'ml-0' : ''} flex flex-col h-full`}>
           <AppControls
-            isChatMode={isChatMode}
-            setIsChatMode={setIsChatMode}
             models={models}
             selectedModel={selectedModel}
             setSelectedModel={setSelectedModel}

@@ -1,33 +1,12 @@
 import { ModelSelector } from '@/components/controls/ModelSelector';
 import { SystemPrompt } from '@/components/controls/SystemPrompt';
 
-interface Model {
-  id: string;
-  name: string;
-  description?: string;
-  pricing?: {
-    prompt: number;
-    completion: number;
-  };
-  context_length?: number;
-  features?: string[];
-  supportsStructured?: boolean;
-}
-
-interface PresetPrompt {
-  id: string;
-  name: string;
-  prompt: string;
-}
-
 interface AppControlsProps {
-  isChatMode: boolean;
-  setIsChatMode: (mode: boolean) => void;
-  models: Model[];
+  models: any[];
   selectedModel: string;
   setSelectedModel: (model: string) => void;
   loadingModels: boolean;
-  setUseStructuredOutput: (use: boolean) => void;
+  setUseStructuredOutput: (useStructured: boolean) => void;
   showSystemPrompt: boolean;
   setShowSystemPrompt: (show: boolean) => void;
   enableCaching: boolean;
@@ -35,20 +14,18 @@ interface AppControlsProps {
   useStructuredOutput: boolean;
   outputFormat: string;
   setOutputFormat: (format: string) => void;
-  handleGenerateContent: () => Promise<void>;
+  handleGenerateContent: () => void;
   isLoading: boolean;
   content: string;
-  outputFormats: { id: string; name: string }[];
+  outputFormats: any[];
   systemPrompt: string;
   setSystemPrompt: (prompt: string) => void;
   selectedPromptId: string;
   setSelectedPromptId: (id: string) => void;
-  presetSystemPrompts: PresetPrompt[];
+  presetSystemPrompts: any[];
 }
 
 export default function AppControls({
-  isChatMode,
-  setIsChatMode,
   models,
   selectedModel,
   setSelectedModel,
@@ -76,30 +53,6 @@ export default function AppControls({
   return (
     <div className="mb-4 space-y-4">
       <div className="flex flex-wrap gap-4 items-center">
-        {/* Mode Toggle */}
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setIsChatMode(false)}
-            className={`px-3 py-1.5 rounded-lg text-sm ${
-              !isChatMode
-                ? 'bg-blue-500 text-white'
-                : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
-            }`}
-          >
-            Editor
-          </button>
-          <button
-            onClick={() => setIsChatMode(true)}
-            className={`px-3 py-1.5 rounded-lg text-sm ${
-              isChatMode
-                ? 'bg-blue-500 text-white'
-                : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
-            }`}
-          >
-            Chat
-          </button>
-        </div>
-
         {/* Model Selection */}
         <ModelSelector
           models={models}
@@ -121,51 +74,46 @@ export default function AppControls({
           {showSystemPrompt ? 'Hide System Prompt' : 'Show System Prompt'}
         </button>
 
-        {!isChatMode && (
-          <>
-            {/* Caching Toggle */}
+        {/* Caching Toggle */}
+        <button
+          onClick={() => setEnableCaching(!enableCaching)}
+          className={`px-3 py-1.5 rounded-lg text-sm ${
+            enableCaching
+              ? 'bg-blue-500 text-white'
+              : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
+          }`}
+          title="Enable/disable response caching"
+        >
+          {enableCaching ? 'Caching On' : 'Caching Off'}
+        </button>
+
+        {selectedModelData?.supportsStructured && (
+          <div className="flex items-center gap-2">
             <button
-              onClick={() => setEnableCaching(!enableCaching)}
+              onClick={() => setUseStructuredOutput(!useStructuredOutput)}
               className={`px-3 py-1.5 rounded-lg text-sm ${
-                enableCaching
+                useStructuredOutput
                   ? 'bg-blue-500 text-white'
                   : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
               }`}
-              title="Enable/disable response caching"
             >
-              {enableCaching ? 'Caching On' : 'Caching Off'}
+              {useStructuredOutput ? 'Structured' : 'Freeform'}
             </button>
 
-            {/* Structured Output Controls */}
-            {selectedModelData?.supportsStructured && (
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setUseStructuredOutput(!useStructuredOutput)}
-                  className={`px-3 py-1.5 rounded-lg text-sm ${
-                    useStructuredOutput
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
-                  }`}
-                >
-                  {useStructuredOutput ? 'Structured' : 'Freeform'}
-                </button>
-
-                {useStructuredOutput && (
-                  <select
-                    value={outputFormat}
-                    onChange={(e) => setOutputFormat(e.target.value)}
-                    className="px-3 py-1.5 rounded-lg text-sm bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600"
-                  >
-                    {outputFormats.map((format) => (
-                      <option key={format.id} value={format.id}>
-                        {format.name}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </div>
+            {useStructuredOutput && (
+              <select
+                value={outputFormat}
+                onChange={(e) => setOutputFormat(e.target.value)}
+                className="px-3 py-1.5 rounded-lg text-sm bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600"
+              >
+                {outputFormats.map((format) => (
+                  <option key={format.id} value={format.id}>
+                    {format.name}
+                  </option>
+                ))}
+              </select>
             )}
-          </>
+          </div>
         )}
       </div>
 

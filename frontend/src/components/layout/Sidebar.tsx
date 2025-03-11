@@ -6,7 +6,6 @@ interface SidebarProps {
   deleteAllConversations: () => Promise<void>;
   setCurrentConversation: (id: number | null) => void;
   setChatMessages: (messages: any[]) => void;
-  setIsChatMode: (mode: boolean) => void;
   selectedPromptId: string;
 }
 
@@ -18,7 +17,6 @@ export default function Sidebar({
   deleteAllConversations,
   setCurrentConversation,
   setChatMessages,
-  setIsChatMode,
   selectedPromptId,
 }: SidebarProps) {
   return (
@@ -29,7 +27,6 @@ export default function Sidebar({
           onClick={() => {
             setCurrentConversation(null);
             setChatMessages([]);
-            setIsChatMode(true);
           }}
           className="w-full px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg flex items-center justify-center gap-2 transition-colors"
         >
