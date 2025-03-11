@@ -28,6 +28,7 @@
     "openai": "^4.86.2",
     "sqlite3": "^5.1.7",
     "ts-node": "^10.9.2",
-    "typescript": "^5.8.2"
+    "typescript": "^5.8.2",
+    "unsplash-js": "^7.0.10"
   }
 }
