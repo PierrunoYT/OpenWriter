@@ -818,7 +818,23 @@ export default function EditorPage() {
       
       {/* Footer */}
       <footer className={`py-2 text-center text-xs ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'} border-t ${theme === 'dark' ? 'border-slate-700' : 'border-slate-200'} flex-shrink-0`}>
-        <p>Powered by OpenRouter • Split Editor/Chat Mode</p>
+        <p className="flex items-center justify-center">
+          <span className="inline-flex items-center">
+            <span>Powered by</span>
+            <a 
+              href="https://openrouter.ai" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="ml-1 text-blue-500 hover:text-blue-600 transition-colors"
+            >
+              OpenRouter
+            </a>
+          </span>
+          <span className="mx-2">•</span>
+          <span>Split Editor/Chat Mode</span>
+          <span className="mx-2">•</span>
+          <span>{new Date().getFullYear()} OpenWriter</span>
+        </p>
       </footer>
     </div>
   );

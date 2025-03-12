@@ -105,6 +105,12 @@ export default function Sidebar({
             </svg>
             Clear All Conversations
           </button>
+          
+          <div className="mt-4 text-xs text-center text-slate-500 dark:text-slate-400">
+            <a href="https://openrouter.ai" target="_blank" rel="noopener noreferrer" className="hover:text-blue-500 transition-colors">
+              Powered by OpenRouter
+            </a>
+          </div>
         </div>
       )}
     </aside>
