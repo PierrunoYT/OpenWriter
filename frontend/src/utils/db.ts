@@ -1,3 +1,5 @@
+'use client';
+
 // Conditional imports for server-side only
 let fs: any;
 let path: any;
@@ -63,7 +65,9 @@ function readData(filePath: string): any[] {
   // Client-side implementation using localStorage
   else {
     try {
-      const key = filePath === conversationsPath ? 'conversations' : 'messages';
+      const key = filePath.includes('conversations.json') ? 'conversations' : 
+                 filePath.includes('messages.json') ? 'messages' : 
+                 filePath; // fallback to using the path as key
       const data = localStorage.getItem(key);
       return data ? JSON.parse(data) : [];
     } catch (error) {
@@ -106,7 +110,9 @@ function writeData(filePath: string, data: any): void {
   // Client-side implementation using localStorage
   else {
     try {
-      const key = filePath === conversationsPath ? 'conversations' : 'messages';
+      const key = filePath.includes('conversations.json') ? 'conversations' : 
+                 filePath.includes('messages.json') ? 'messages' : 
+                 filePath; // fallback to using the path as key
       localStorage.setItem(key, JSON.stringify(data));
     } catch (error) {
       console.error(`Error writing data to localStorage:`, error);
