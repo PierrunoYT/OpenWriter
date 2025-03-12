@@ -46,14 +46,16 @@ export default function EditorPage() {
       if (selectionStart !== undefined && selectionEnd !== undefined) {
         if (selectionStart !== selectionEnd) {
           const selectedText = editorContent.substring(selectionStart, selectionEnd);
-          setSelectedText(selectedText);
-          setSelectionRange({ start: selectionStart, end: selectionEnd });
+          setSelection(selectedText, { start: selectionStart, end: selectionEnd });
           // Store in localStorage for persistence
           localStorage.setItem('savedSelectedText', selectedText);
+        } else {
+          clearSelection();
         }
       }
     } catch (error) {
       console.error('Error handling text selection:', error);
+      clearSelection();
     }
   };
   
@@ -81,7 +83,7 @@ export default function EditorPage() {
     // Load any saved selection on component mount
     const savedSelection = localStorage.getItem('savedSelectedText');
     if (savedSelection) {
-      setSelectedText(savedSelection);
+      setSelection(savedSelection, null);
     }
   }, []);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -990,7 +992,6 @@ export default function EditorPage() {
                   API_BASE_URL={API_BASE_URL}
                   handleChatSend={handleChatSend}
                   handleGenerateContent={handleGenerateContent}
-                  selectedText={selectedText}
                   replaceSelectedText={replaceSelectedText}
                 />
               </div>

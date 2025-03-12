@@ -27,7 +27,6 @@ export default function Chat({
   API_BASE_URL,
   handleChatSend,
   handleGenerateContent,
-  selectedText,
   replaceSelectedText,
 }: {
   content: string;
@@ -47,7 +46,6 @@ export default function Chat({
   API_BASE_URL: string;
   handleChatSend: () => Promise<void>;
   handleGenerateContent: () => Promise<void>;
-  selectedText: string;
   replaceSelectedText: () => void;
 }) {
   const { theme } = useTheme();
