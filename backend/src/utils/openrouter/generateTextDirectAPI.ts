@@ -161,7 +161,7 @@ export async function generateTextDirectAPI(
   options: OpenRouterOptions = {},
   res?: any,
   axiosConfig: any = {}
-) {
+): Promise<any> {
   try {
     const model = options.model || 'anthropic/claude-3.7-sonnet';
     const enableCaching = options.enableCaching !== undefined ? options.enableCaching : true;
@@ -287,8 +287,8 @@ export async function generateTextDirectAPI(
       );
       
       response.data.pipe(res);
-      return new Promise((resolve, reject) => {
-        response.data.on('end', resolve);
+      return new Promise<void>((resolve, reject) => {
+        response.data.on('end', () => resolve());
         response.data.on('error', reject);
       });
     } else {
