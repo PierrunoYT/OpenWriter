@@ -62,7 +62,7 @@ export default function EditorPage() {
   const [, setIsCreatingConversation] = useState<boolean>(false);
 
   // Fetch all conversations
-  const fetchConversations = async () => {
+  const fetchConversations = async (): Promise<void> => {
     try {
       const response = await fetch('/api/conversations');
       if (!response.ok) throw new Error('Failed to fetch conversations');
@@ -76,7 +76,7 @@ export default function EditorPage() {
   };
 
   // Fetch a specific conversation
-  const fetchConversation = async (id: number) => {
+  const fetchConversation = async (id: number): Promise<void> => {
     try {
       const response = await fetch(`/api/conversations/${id}`);
       if (!response.ok) throw new Error('Failed to fetch conversation');
@@ -126,7 +126,7 @@ export default function EditorPage() {
   };
 
   // Handle sending a chat message
-  const handleChatSend = async () => {
+  const handleChatSend = async (): Promise<void> => {
     if (!content.trim()) return;
     
     // Add user message to chat
@@ -292,7 +292,7 @@ export default function EditorPage() {
   };
 
   // Create a new conversation
-  const createConversation = async (title: string) => {
+  const createConversation = async (title: string): Promise<number | null> => {
     try {
       setIsCreatingConversation(true);
       console.log(`Creating new conversation with title: ${title}`);
@@ -337,7 +337,7 @@ export default function EditorPage() {
   };
   
   // Delete a conversation
-  const deleteConversation = async (id: number) => {
+  const deleteConversation = async (id: number): Promise<void> => {
     try {
       const response = await fetch(`/api/conversations/${id}`, {
         method: 'DELETE'
@@ -359,7 +359,7 @@ export default function EditorPage() {
   };
   
   // Delete all conversations
-  const deleteAllConversations = async () => {
+  const deleteAllConversations = async (): Promise<void> => {
     if (!confirm('Are you sure you want to delete all conversations? This cannot be undone.')) {
       return;
     }
@@ -383,10 +383,10 @@ export default function EditorPage() {
   };
   
   // Save a message to the current conversation
-  const saveMessage = async (role: string, content: string) => {
+  const saveMessage = async (role: string, content: string): Promise<any> => {
     if (!currentConversation) {
       console.error('Attempted to save message without active conversation');
-      return;
+      return null;
     }
     
     try {
@@ -416,7 +416,7 @@ export default function EditorPage() {
   // If needed in the future, it can be reimplemented
 
 
-  const handleGenerateContent = async () => {
+  const handleGenerateContent = async (): Promise<void> => {
     setIsLoading(true);
     try {
       const response = await fetch(`${API_BASE_URL}/chat/completions`, {
