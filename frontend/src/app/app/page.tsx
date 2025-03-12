@@ -6,6 +6,7 @@ import Chat from './components/Chat';
 import Header from '../../components/layout/Header';
 import Sidebar from '../../components/layout/Sidebar';
 import AppControls from '../../components/controls/AppControls';
+import { ErrorWithDetails } from '@/types/errors';
 
 // Define types for models
 interface Model {
@@ -195,10 +196,29 @@ export default function EditorPage() {
         if (!response.ok) {
           console.error(`API error: ${response.status}`);
           
+          // Try to parse error details if available
+          let errorDetails: ErrorWithDetails | null = null;
+          try {
+            errorDetails = await response.json();
+          } catch (e) {
+            // Couldn't parse JSON error response
+          }
+          
+          // Create error message with details if available
+          let errorMessage = `I'm sorry, but there was an error communicating with the AI (${response.status}).`;
+          
+          if (errorDetails?.message) {
+            errorMessage += ` Error: ${errorDetails.message}`;
+          }
+          
+          if (errorDetails?.reasons && errorDetails.reasons.length > 0) {
+            errorMessage += ` Reason: ${errorDetails.reasons[0]}`;
+          }
+          
           // Replace the "thinking" message with an error message
           const errorMessages: ChatMessage[] = [...updatedMessages, { 
             role: 'assistant', 
-            content: `I'm sorry, but there was an error communicating with the AI (${response.status}). Please try again.` 
+            content: errorMessage + ' Please try again.'
           } as ChatMessage];
           setChatMessages(errorMessages);
           return;
@@ -429,7 +449,31 @@ export default function EditorPage() {
       // Check if the response is ok
       if (!response.ok) {
         console.error(`API error: ${response.status}`);
-        setAiResponse(`Error: The API returned a ${response.status} status code. Please try again.`);
+        
+        // Try to parse error details if available
+        let errorDetails: ErrorWithDetails | null = null;
+        try {
+          errorDetails = await response.json();
+        } catch (e) {
+          // Couldn't parse JSON error response
+        }
+        
+        // Create error message with details if available
+        let errorMessage = `Error: The API returned a ${response.status} status code.`;
+        
+        if (errorDetails?.message) {
+          errorMessage += ` ${errorDetails.message}`;
+        }
+        
+        if (errorDetails?.reasons && errorDetails.reasons.length > 0) {
+          errorMessage += ` Reason: ${errorDetails.reasons[0]}`;
+        }
+        
+        if (errorDetails?.provider) {
+          errorMessage += ` (Provider: ${errorDetails.provider})`;
+        }
+        
+        setAiResponse(errorMessage + ' Please try again.');
         return;
       }
       
