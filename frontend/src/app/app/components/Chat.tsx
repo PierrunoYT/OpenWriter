@@ -13,11 +13,18 @@ export default function Chat({
   content,
   setContent,
   aiResponse,
+  setAiResponse,
   isLoading,
-  // Since these props are required by the component's interface but not directly used in this component,
-  // we'll keep them in the interface but mark them with an underscore to indicate they're not used here
+  setIsLoading,
+  selectedModel,
+  systemPrompt,
   chatMessages,
   setChatMessages,
+  currentConversation,
+  setCurrentConversation,
+  saveMessage,
+  createConversation,
+  API_BASE_URL,
   handleChatSend,
   handleGenerateContent,
   replaceSelectedText,
@@ -25,25 +32,26 @@ export default function Chat({
   content: string;
   setContent: (content: string) => void;
   aiResponse: string;
+  setAiResponse: (response: string) => void;
   isLoading: boolean;
+  setIsLoading: (loading: boolean) => void;
+  selectedModel: string;
+  systemPrompt: string;
   chatMessages: ChatMessage[];
   setChatMessages: (messages: ChatMessage[]) => void;
-  handleChatSend: (processedMessage?: string) => Promise<void>;
+  currentConversation: number | null;
+  setCurrentConversation: (id: number | null) => void;
+  saveMessage: (role: string, content: string) => Promise<unknown>;
+  createConversation: (title: string) => Promise<number | null>;
+  API_BASE_URL: string;
+  handleChatSend: () => Promise<void>;
   handleGenerateContent: () => Promise<void>;
-  replaceSelectedText: (text?: string) => void;
+  replaceSelectedText: () => void;
 }) {
-  // We use the useTheme hook for theme-related functionality
-  useTheme();
+  const { theme } = useTheme();
   const [savedSelection, setSavedSelection] = useState<string | null>(null);
   const [isClient, setIsClient] = useState(false);
-  const { isSelectionActive, selectedText, clearSelection, selectionTimestamp, toggleSelectionUse } = useSelection();
-  
-  // We don't need to track lastSelectionTime anymore as it's not being displayed in the UI
-  // Update selection state when selectionTimestamp changes
-  useEffect(() => {
-    // This effect is kept to re-render the component when selection changes
-    // We don't need to do anything in the effect body
-  }, [selectionTimestamp]);
+  const { isSelectionActive, selectedText, clearSelection } = useSelection();
 
   // Update saved selection when component mounts on client
   useEffect(() => {
@@ -65,73 +73,23 @@ export default function Chat({
   
   // Function to handle chat messages that reference selected text
   const processSelectionInMessage = (message: string) => {
-    // First check if we have an active selection
-    const useSelectedText = isClient ? localStorage.getItem('useSelectedText') === 'true' : false;
-    const hasActiveSelection = isSelectionActive || useSelectedText;
-    
-    if (hasActiveSelection && selectedText) {
-      // Enhanced selection detection patterns
+    if (isSelectionActive && selectedText) {
+      // Check if the message is asking to do something with the selection
       const selectionCommands = [
-        // Direct references to selection
-        'selected text', 'selection', 'highlighted text', 'highlighted portion',
-        'selected portion', 'this selection', 'selected part', 'selection above',
-        
-        // Action commands on selection
-        'improve this', 'fix this', 'rewrite this', 'edit this', 'review this',
-        'analyze this', 'check this', 'proofread this', 'correct this',
-        
-        // Instruction patterns
-        'the text i selected', 'the part i selected', 'what i selected',
-        'this section', 'this paragraph', 'this passage', 'this sentence'
+        'selected text', 'selection', 'highlighted text', 
+        'selected portion', 'this selection', 'selected part'
       ];
       
-      // Check if any of the patterns are in the message
       const hasSelectionCommand = selectionCommands.some(cmd => 
         message.toLowerCase().includes(cmd)
       );
       
-      // Check for command patterns like "fix", "improve", etc. when they're the first word
-      const commandPatternRegex = /^(fix|improve|rewrite|edit|review|analyze|check|proofread|correct|translate|summarize|expand)/i;
-      const startsWithCommand = commandPatternRegex.test(message.trim());
-      
-      if (hasSelectionCommand || startsWithCommand) {
-        // Format the selection with markdown for better readability
+      if (hasSelectionCommand) {
         return `${message}\n\nSelected text:\n\`\`\`\n${selectedText}\n\`\`\``;
       }
     }
     
     return message;
-  };
-
-  // We'll reuse the provided handleChatSend function but process selection first
-  const processAndSendMessage = async () => {
-    if (!isLoading && content.trim()) {
-      // Process the message with selection awareness
-      const processedContent = processSelectionInMessage(content);
-      
-      // Store the processed content for later reference
-      const finalContent = processedContent;
-      
-      // Clear input immediately for better UX
-      setContent('');
-      
-      // If we have messages already, send through chat
-      if (chatMessages.length > 0) {
-        // Add user message to UI immediately
-        setChatMessages([...chatMessages, { role: 'user' as const, content: finalContent }]);
-        
-        // Add the assistant "thinking" message
-        // We need to use the updated array that includes the user message
-        const updatedMessages = [...chatMessages, { role: 'user' as const, content: finalContent }];
-        setChatMessages([...updatedMessages, { role: 'assistant' as const, content: 'Thinking...' }]);
-        
-        // Call the parent's handleChatSend function with our processed message
-        handleChatSend(finalContent);
-      } else {
-        // For first message, use the content generation flow
-        handleGenerateContent();
-      }
-    }
   };
 
   return (
@@ -141,13 +99,7 @@ export default function Chat({
           <>
             {isSelectionActive && (
               <div className="absolute top-3 left-3 text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded-md flex items-center z-10 shadow-sm border border-blue-200 dark:border-blue-800">
-                <span className="mr-1">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1 inline-block">
-                    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
-                    <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
-                  </svg>
-                  Selection Active
-                </span>
+                <span className="mr-1">Selection Active</span>
                 <button 
                   onClick={() => clearSelection()}
                   className="text-blue-600 dark:text-blue-300 hover:text-blue-800 dark:hover:text-blue-100 ml-1"
@@ -240,11 +192,11 @@ export default function Chat({
         ) : (
           <div className="text-slate-400 dark:text-slate-500 h-full flex items-center justify-center flex-col p-6">
             <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="mb-4 opacity-50">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2z"></path>
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
             </svg>
             <p className="text-center font-medium mb-3 text-slate-600 dark:text-slate-300">Your AI Writing Assistant</p>
             <div className="text-center mb-4 max-w-sm">
-              <p className="mb-2">I can help you write, edit, analyze, and improve your text. Here&apos;s how to use me:</p>
+              <p className="mb-2">I can help you write, edit, analyze, and improve your text. Here's how to use me:</p>
             </div>
             <ul className="text-center text-sm space-y-2 max-w-xs mb-2">
               <li className="flex items-center gap-2 justify-center">
@@ -281,11 +233,13 @@ export default function Chat({
           {(isSelectionActive || savedSelection) && (
             <button
               onClick={() => {
-                // Use the toggle function from context
-                toggleSelectionUse();
-                
-                // Show visual feedback
-                if (!(isClient && localStorage.getItem('useSelectedText') === 'true')) {
+                // Toggle the selection state
+                const currentState = localStorage.getItem('useSelectedText') === 'true';
+                if (currentState) {
+                  localStorage.removeItem('useSelectedText');
+                } else {
+                  localStorage.setItem('useSelectedText', 'true');
+                  // Show visual feedback without alert
                   const feedbackElement = document.createElement('div');
                   feedbackElement.textContent = 'Selection will be used as context';
                   feedbackElement.className = 'fixed bottom-4 right-4 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
@@ -310,25 +264,14 @@ export default function Chat({
             </button>
           )}
           
-          {(aiResponse || (chatMessages.length > 0 && chatMessages[chatMessages.length - 1].role === 'assistant')) && isSelectionActive && (
+          {aiResponse && isSelectionActive && (
             <button
-              onClick={() => {
-                // If we have an AI response directly, use it
-                // Otherwise, use the last assistant message from the chat
-                const textToInsert = aiResponse || 
-                  (chatMessages.length > 0 && 
-                   chatMessages[chatMessages.length - 1].role === 'assistant' ? 
-                   chatMessages[chatMessages.length - 1].content : '');
-                
-                if (textToInsert && textToInsert !== 'Thinking...') {
-                  replaceSelectedText(textToInsert);
-                }
-              }}
+              onClick={replaceSelectedText}
               className="text-xs px-2 py-1 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded flex items-center gap-1 hover:bg-green-200 dark:hover:bg-green-800 transition-colors"
               title="Replace selected text with AI response"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2z"></path>
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
                 <polyline points="17 21 17 13 7 13 7 21"></polyline>
                 <polyline points="7 3 7 8 15 8"></polyline>
               </svg>
@@ -347,12 +290,21 @@ export default function Chat({
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
                 e.preventDefault();
-                processAndSendMessage();
+                if (!isLoading && content.trim()) {
+                  if (chatMessages.length > 0) {
+                    // Process the message with selection awareness
+                    const processedContent = processSelectionInMessage(content);
+                    setContent(processedContent);
+                    handleChatSend();
+                  } else {
+                    handleGenerateContent();
+                  }
+                }
               }
             }}
           />
           <button
-            onClick={processAndSendMessage}
+            onClick={chatMessages.length > 0 ? handleChatSend : handleGenerateContent}
             disabled={isLoading || !content.trim()}
             className={`absolute right-3 p-2 rounded-full transition-colors ${
               isLoading || !content.trim()
@@ -374,7 +326,7 @@ export default function Chat({
           </button>
         </div>
         <p className="mt-2 text-xs text-center text-slate-500 dark:text-slate-400">
-          Press Enter to send your message
+          Press Enter to send, Shift+Enter for new line
         </p>
       </div>
     </div>
