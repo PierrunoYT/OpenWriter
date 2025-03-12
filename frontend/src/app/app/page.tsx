@@ -183,10 +183,10 @@ export default function EditorPage() {
       setChatMessages([...updatedMessages, thinkingMessage]);
       
       try {
-        // Prepare all messages for context
+        // Always include editor content in the system prompt for context
         const messagesForAPI = [
-          { role: 'system', content: systemPrompt + (localStorage.getItem('useEditorText') && content.trim() ? 
-            "\n\nThe user has the following text in their editor that they may reference:\n\n" + content : "") 
+          { role: 'system', content: systemPrompt + (content.trim() ? 
+            "\n\nThe user has the following text in their editor:\n\n" + content : "") 
           },
           ...updatedMessages // Include conversation history
         ];
@@ -811,7 +811,6 @@ export default function EditorPage() {
                   API_BASE_URL={API_BASE_URL}
                   handleChatSend={handleChatSend}
                   handleGenerateContent={handleGenerateContent}
-                  editorContent={content}
                 />
               </div>
             </div>

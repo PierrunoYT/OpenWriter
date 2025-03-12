@@ -26,7 +26,6 @@ export default function Chat({
   API_BASE_URL,
   handleChatSend,
   handleGenerateContent,
-  editorContent,
 }: {
   content: string;
   setContent: (content: string) => void;
@@ -45,7 +44,6 @@ export default function Chat({
   API_BASE_URL: string;
   handleChatSend: () => Promise<void>;
   handleGenerateContent: () => Promise<void>;
-  editorContent: string;
 }) {
   const { theme } = useTheme();
 
@@ -145,34 +143,6 @@ export default function Chat({
       </div>
 
       <div className="border-t border-slate-200 dark:border-slate-700 p-3">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center">
-            <button
-              onClick={() => {
-                const useEditorText = !localStorage.getItem('useEditorText');
-                if (useEditorText) {
-                  localStorage.setItem('useEditorText', 'true');
-                } else {
-                  localStorage.removeItem('useEditorText');
-                }
-                // Force re-render
-                setContent(content);
-              }}
-              className={`text-xs px-2 py-1 rounded flex items-center gap-1 transition-colors ${
-                localStorage.getItem('useEditorText') 
-                  ? 'bg-blue-500 text-white hover:bg-blue-600' 
-                  : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
-              }`}
-              title="Enable/disable reference to editor text"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
-                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
-              </svg>
-              {localStorage.getItem('useEditorText') ? 'Editor Text Enabled' : 'Editor Text Disabled'}
-            </button>
-          </div>
-        </div>
         
         <div className="flex items-center relative">
           <input
