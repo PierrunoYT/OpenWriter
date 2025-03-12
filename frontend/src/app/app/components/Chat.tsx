@@ -26,6 +26,7 @@ export default function Chat({
   API_BASE_URL,
   handleChatSend,
   handleGenerateContent,
+  editorContent,
 }: {
   content: string;
   setContent: (content: string) => void;
@@ -44,6 +45,7 @@ export default function Chat({
   API_BASE_URL: string;
   handleChatSend: () => Promise<void>;
   handleGenerateContent: () => Promise<void>;
+  editorContent: string;
 }) {
   const { theme } = useTheme();
 
@@ -143,6 +145,65 @@ export default function Chat({
       </div>
 
       <div className="border-t border-slate-200 dark:border-slate-700 p-3">
+        <div className="flex items-center gap-2 mb-2">
+          <button
+            onClick={() => {
+              if (editorContent.trim()) {
+                setContent(`Analyze this text: ${editorContent.substring(0, 100)}${editorContent.length > 100 ? '...' : ''}`);
+              } else {
+                setContent("Please add some text to the editor first.");
+              }
+            }}
+            className="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded flex items-center gap-1 hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
+            title="Reference the text in your editor"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+            </svg>
+            Reference Editor Text
+          </button>
+          
+          <button
+            onClick={() => {
+              if (editorContent.trim()) {
+                setContent(`Summarize this text: ${editorContent.substring(0, 100)}${editorContent.length > 100 ? '...' : ''}`);
+              } else {
+                setContent("Please add some text to the editor first.");
+              }
+            }}
+            className="text-xs px-2 py-1 bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 rounded flex items-center gap-1 hover:bg-indigo-200 dark:hover:bg-indigo-800 transition-colors"
+            title="Summarize the text in your editor"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="21" y1="6" x2="3" y2="6"></line>
+              <line x1="17" y1="12" x2="3" y2="12"></line>
+              <line x1="13" y1="18" x2="3" y2="18"></line>
+            </svg>
+            Summarize
+          </button>
+          
+          <button
+            onClick={() => {
+              if (editorContent.trim()) {
+                setContent(`Improve this text: ${editorContent.substring(0, 100)}${editorContent.length > 100 ? '...' : ''}`);
+              } else {
+                setContent("Please add some text to the editor first.");
+              }
+            }}
+            className="text-xs px-2 py-1 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded flex items-center gap-1 hover:bg-green-200 dark:hover:bg-green-800 transition-colors"
+            title="Improve the text in your editor"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20 7h-9"></path>
+              <path d="M14 17H5"></path>
+              <circle cx="17" cy="17" r="3"></circle>
+              <circle cx="7" cy="7" r="3"></circle>
+            </svg>
+            Improve
+          </button>
+        </div>
+        
         <div className="flex items-center relative">
           <input
             type="text"

@@ -185,7 +185,9 @@ export default function EditorPage() {
       try {
         // Prepare all messages for context
         const messagesForAPI = [
-          { role: 'system', content: systemPrompt },
+          { role: 'system', content: systemPrompt + (content.trim() ? 
+            "\n\nThe user has the following text in their editor that they may reference:\n\n" + content : "") 
+          },
           ...updatedMessages // Include conversation history
         ];
         
@@ -809,6 +811,7 @@ export default function EditorPage() {
                   API_BASE_URL={API_BASE_URL}
                   handleChatSend={handleChatSend}
                   handleGenerateContent={handleGenerateContent}
+                  editorContent={content}
                 />
               </div>
             </div>
