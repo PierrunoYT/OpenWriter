@@ -51,8 +51,8 @@ export default function AppControls({
   const selectedModelData = models.find(m => m.id === selectedModel);
 
   return (
-    <div className="mb-4 space-y-4">
-      <div className="flex flex-wrap gap-4 items-center">
+    <div className="bg-transparent">
+      <div className="flex flex-wrap gap-3 items-center justify-between">
         {/* Model Selection */}
         <ModelSelector
           models={models}
