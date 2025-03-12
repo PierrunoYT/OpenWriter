@@ -118,12 +118,12 @@ export default function Chat({
       // If we have messages already, send through chat
       if (chatMessages.length > 0) {
         // Add user message to UI immediately
-        setChatMessages([...chatMessages, { role: 'user', content: finalContent }]);
+        setChatMessages([...chatMessages, { role: 'user' as 'user', content: finalContent }]);
         
         // Add the assistant "thinking" message
         // We need to use the updated array that includes the user message
-        const updatedMessages = [...chatMessages, { role: 'user' as const, content: finalContent }];
-        setChatMessages([...updatedMessages, { role: 'assistant' as const, content: 'Thinking...' }]);
+        const updatedMessages = [...chatMessages, { role: 'user' as 'user', content: finalContent }];
+        setChatMessages([...updatedMessages, { role: 'assistant' as 'assistant', content: 'Thinking...' }]);
         
         // Call the parent's handleChatSend function with our processed message
         handleChatSend(finalContent);
