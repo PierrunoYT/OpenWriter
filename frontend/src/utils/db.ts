@@ -35,17 +35,30 @@ if (typeof window === 'undefined') {
   }
 }
 
-// Helper function to read JSON data
+// Helper function to read JSON data with retry logic
 function readData(filePath: string): any[] {
   // Server-side implementation
   if (typeof window === 'undefined') {
-    try {
-      const data = fs.readFileSync(filePath, 'utf8');
-      return JSON.parse(data);
-    } catch (error) {
-      console.error(`Error reading data from ${filePath}:`, error);
-      return [];
+    let retries = 3;
+    let lastError;
+    
+    while (retries > 0) {
+      try {
+        const data = fs.readFileSync(filePath, 'utf8');
+        return JSON.parse(data);
+      } catch (error) {
+        lastError = error;
+        console.error(`Error reading data from ${filePath}, retries left: ${retries}:`, error);
+        retries--;
+        // Small delay before retry
+        if (retries > 0) {
+          const delay = Math.floor(Math.random() * 100) + 50; // 50-150ms
+          Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, delay);
+        }
+      }
     }
+    console.error(`Failed to read data after multiple attempts:`, lastError);
+    return [];
   } 
   // Client-side implementation using localStorage
   else {
@@ -60,15 +73,35 @@ function readData(filePath: string): any[] {
   }
 }
 
-// Helper function to write JSON data
+// Helper function to write JSON data with locking mechanism
 function writeData(filePath: string, data: any): void {
   // Server-side implementation
   if (typeof window === 'undefined') {
-    try {
-      fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
-    } catch (error) {
-      console.error(`Error writing data to ${filePath}:`, error);
+    let retries = 3;
+    let lastError;
+    
+    while (retries > 0) {
+      try {
+        // Create a temporary file first
+        const tempPath = `${filePath}.tmp`;
+        fs.writeFileSync(tempPath, JSON.stringify(data, null, 2));
+        
+        // Atomically rename the temp file to the target file
+        // This helps prevent corruption if the process is interrupted
+        fs.renameSync(tempPath, filePath);
+        return;
+      } catch (error) {
+        lastError = error;
+        console.error(`Error writing data to ${filePath}, retries left: ${retries}:`, error);
+        retries--;
+        // Small delay before retry
+        if (retries > 0) {
+          const delay = Math.floor(Math.random() * 100) + 50; // 50-150ms
+          Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, delay);
+        }
+      }
     }
+    console.error(`Failed to write data after multiple attempts:`, lastError);
   } 
   // Client-side implementation using localStorage
   else {

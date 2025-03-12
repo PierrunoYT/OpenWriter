@@ -2,9 +2,13 @@
 node_modules/
 .pnp
 .pnp.js
+.yarn/
 
 # Testing
 coverage/
+__tests__/
+test/
+tests/
 
 # Next.js
 .next/
@@ -45,11 +49,23 @@ Thumbs.db
 # Package files
 package-lock.json
 yarn.lock
+pnpm-lock.yaml
 
 # Common large files
 *.min.js
 *.min.css
+*.map
 
 # Temporary files
 *.tmp
 *.temp
+
+# Generated files
+public/sw.js
+public/workbox-*.js
+
+# Large media files
+*.mp4
+*.webm
+*.mov
+*.avi
