@@ -744,75 +744,76 @@ export default function EditorPage() {
         )}
 
         
-        {/* App Controls in Header */}
-        <div className="px-4 py-2 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
-          <AppControls
-            models={models}
-            selectedModel={selectedModel}
-            setSelectedModel={setSelectedModel}
-            loadingModels={loadingModels}
-            setUseStructuredOutput={setUseStructuredOutput}
-            showSystemPrompt={showSystemPrompt}
-            setShowSystemPrompt={setShowSystemPrompt}
-            enableCaching={enableCaching}
-            setEnableCaching={setEnableCaching}
-            useStructuredOutput={useStructuredOutput}
-            outputFormat={outputFormat}
-            setOutputFormat={setOutputFormat}
-            handleGenerateContent={handleGenerateContent}
-            isLoading={isLoading}
-            content={content}
-            outputFormats={outputFormats}
-            systemPrompt={systemPrompt}
-            setSystemPrompt={setSystemPrompt}
-            selectedPromptId={selectedPromptId}
-            setSelectedPromptId={setSelectedPromptId}
-            presetSystemPrompts={presetSystemPrompts}
-          />
-        </div>
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* App Controls in Header */}
+          <div className="px-4 py-2 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+            <AppControls
+              models={models}
+              selectedModel={selectedModel}
+              setSelectedModel={setSelectedModel}
+              loadingModels={loadingModels}
+              setUseStructuredOutput={setUseStructuredOutput}
+              showSystemPrompt={showSystemPrompt}
+              setShowSystemPrompt={setShowSystemPrompt}
+              enableCaching={enableCaching}
+              setEnableCaching={setEnableCaching}
+              useStructuredOutput={useStructuredOutput}
+              outputFormat={outputFormat}
+              setOutputFormat={setOutputFormat}
+              handleGenerateContent={handleGenerateContent}
+              isLoading={isLoading}
+              content={content}
+              outputFormats={outputFormats}
+              systemPrompt={systemPrompt}
+              setSystemPrompt={setSystemPrompt}
+              selectedPromptId={selectedPromptId}
+              setSelectedPromptId={setSelectedPromptId}
+              presetSystemPrompts={presetSystemPrompts}
+            />
+          </div>
 
-        {/* Main Content Area */}
-        <main className={`flex-1 overflow-hidden p-4 ${showSidebar ? 'ml-0' : ''} flex flex-row h-full`}>
-          {/* Left side - Editor area */}
-          <div className="w-1/2 overflow-hidden h-full flex flex-col mr-4">
-            
-            <div className="flex-1 overflow-hidden mt-4 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
-              <div className="p-4 h-full">
-                <textarea
-                  className="w-full h-full p-3 bg-transparent focus:outline-none resize-none"
-                  placeholder="Start writing here..."
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                ></textarea>
+          {/* Main Content Area */}
+          <main className={`flex-1 overflow-hidden p-4 ${showSidebar ? 'ml-0' : ''} flex flex-row h-full`}>
+            {/* Left side - Editor area */}
+            <div className="w-1/2 overflow-hidden h-full flex flex-col mr-4">
+              <div className="flex-1 overflow-hidden bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
+                <div className="p-4 h-full">
+                  <textarea
+                    className="w-full h-full p-3 bg-transparent focus:outline-none resize-none"
+                    placeholder="Start writing here..."
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                  ></textarea>
+                </div>
               </div>
             </div>
-          </div>
-          
-          {/* Right side - Chat area */}
-          <div className="w-1/2 overflow-hidden h-full">
-            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm overflow-hidden border border-slate-200 dark:border-slate-700 h-full">
-              <Chat
-                content={content}
-                setContent={setContent}
-                aiResponse={aiResponse}
-                setAiResponse={setAiResponse}
-                isLoading={isLoading}
-                setIsLoading={setIsLoading}
-                selectedModel={selectedModel}
-                systemPrompt={systemPrompt}
-                chatMessages={chatMessages}
-                setChatMessages={setChatMessages}
-                currentConversation={currentConversation}
-                setCurrentConversation={setCurrentConversation}
-                saveMessage={saveMessage}
-                createConversation={createConversation}
-                API_BASE_URL={API_BASE_URL}
-                handleChatSend={handleChatSend}
-                handleGenerateContent={handleGenerateContent}
-              />
+            
+            {/* Right side - Chat area */}
+            <div className="w-1/2 overflow-hidden h-full">
+              <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm overflow-hidden border border-slate-200 dark:border-slate-700 h-full">
+                <Chat
+                  content={content}
+                  setContent={setContent}
+                  aiResponse={aiResponse}
+                  setAiResponse={setAiResponse}
+                  isLoading={isLoading}
+                  setIsLoading={setIsLoading}
+                  selectedModel={selectedModel}
+                  systemPrompt={systemPrompt}
+                  chatMessages={chatMessages}
+                  setChatMessages={setChatMessages}
+                  currentConversation={currentConversation}
+                  setCurrentConversation={setCurrentConversation}
+                  saveMessage={saveMessage}
+                  createConversation={createConversation}
+                  API_BASE_URL={API_BASE_URL}
+                  handleChatSend={handleChatSend}
+                  handleGenerateContent={handleGenerateContent}
+                />
+              </div>
             </div>
-          </div>
-        </main>
+          </main>
+        </div>
       </div>
       
       {/* Footer */}
