@@ -186,7 +186,7 @@ export default function EditorPage() {
       setChatMessages([...updatedMessages, thinkingMessage]);
       
       try {
-        // Check if we should use selected text
+        // Always use selected text if available and the selection flag is set
         const useSelectedText = localStorage.getItem('useSelectedText') === 'true';
         
         // Include selected text or full editor content in the system prompt for context
@@ -201,10 +201,7 @@ export default function EditorPage() {
           ...updatedMessages // Include conversation history
         ];
         
-        // Clear the selection flag after using it
-        if (useSelectedText) {
-          localStorage.removeItem('useSelectedText');
-        }
+        // Don't clear the selection flag until after the request is complete
         
         console.log('Sending chat message with system prompt and user message');
         

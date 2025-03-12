@@ -180,10 +180,21 @@ export default function Chat({
           {selectedText && (
             <button
               onClick={() => {
-                // Instead of setting content, just indicate that selection is being used
-                localStorage.setItem('useSelectedText', 'true');
-                // Show a toast or some visual feedback
-                alert('Selected text will be used as context for your next message');
+                // Toggle the selection state
+                const currentState = localStorage.getItem('useSelectedText') === 'true';
+                if (currentState) {
+                  localStorage.removeItem('useSelectedText');
+                } else {
+                  localStorage.setItem('useSelectedText', 'true');
+                  // Show visual feedback without alert
+                  const feedbackElement = document.createElement('div');
+                  feedbackElement.textContent = 'Selection will be used as context';
+                  feedbackElement.className = 'fixed bottom-4 right-4 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg';
+                  document.body.appendChild(feedbackElement);
+                  setTimeout(() => {
+                    document.body.removeChild(feedbackElement);
+                  }, 2000);
+                }
               }}
               className={`text-xs px-2 py-1 rounded flex items-center gap-1 transition-colors ${
                 localStorage.getItem('useSelectedText') 
