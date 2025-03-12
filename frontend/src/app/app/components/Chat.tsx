@@ -41,9 +41,8 @@ export default function Chat({
   // We don't need to track lastSelectionTime anymore as it's not being displayed in the UI
   // Update selection state when selectionTimestamp changes
   useEffect(() => {
-    // This effect runs when the selection timestamp changes
-    // Keep this effect to maintain the behavior when selection changes
-    // but we don't need to track the time string anymore
+    // This effect is kept to re-render the component when selection changes
+    // We don't need to do anything in the effect body
   }, [selectionTimestamp]);
 
   // Update saved selection when component mounts on client
@@ -122,7 +121,9 @@ export default function Chat({
         setChatMessages([...chatMessages, { role: 'user', content: finalContent }]);
         
         // Add the assistant "thinking" message
-        setChatMessages([...chatMessages, { role: 'user', content: finalContent }, { role: 'assistant', content: 'Thinking...' }]);
+        // We need to use the updated array that includes the user message
+        const updatedMessages = [...chatMessages, { role: 'user', content: finalContent }];
+        setChatMessages([...updatedMessages, { role: 'assistant', content: 'Thinking...' }]);
         
         // Call the parent's handleChatSend function with our processed message
         handleChatSend(finalContent);
@@ -373,7 +374,7 @@ export default function Chat({
           </button>
         </div>
         <p className="mt-2 text-xs text-center text-slate-500 dark:text-slate-400">
-          Press Enter to send, Shift+Enter for new line
+          Press Enter to send your message
         </p>
       </div>
     </div>
