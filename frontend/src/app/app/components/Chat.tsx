@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useTheme } from '../../../utils/ThemeContext';
+import { useSelection } from '@/utils/selectionContext';
 
 interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
@@ -52,6 +53,7 @@ export default function Chat({
   const { theme } = useTheme();
   const [savedSelection, setSavedSelection] = useState<string | null>(null);
   const [isClient, setIsClient] = useState(false);
+  const { isSelectionActive, selectedText, clearSelection } = useSelection();
 
   // Update saved selection when component mounts on client
   useEffect(() => {
@@ -70,12 +72,45 @@ export default function Chat({
     
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
+  
+  // Function to handle chat messages that reference selected text
+  const processSelectionInMessage = (message: string) => {
+    if (isSelectionActive && selectedText) {
+      // Check if the message is asking to do something with the selection
+      const selectionCommands = [
+        'selected text', 'selection', 'highlighted text', 
+        'selected portion', 'this selection', 'selected part'
+      ];
+      
+      const hasSelectionCommand = selectionCommands.some(cmd => 
+        message.toLowerCase().includes(cmd)
+      );
+      
+      if (hasSelectionCommand) {
+        return `${message}\n\nSelected text:\n\`\`\`\n${selectedText}\n\`\`\``;
+      }
+    }
+    
+    return message;
+  };
 
   return (
     <div className="flex flex-col h-full">
       <div className="flex-1 overflow-y-auto p-3 relative">
         {chatMessages.length > 0 ? (
           <>
+            {isSelectionActive && (
+              <div className="absolute top-3 left-3 text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded-md flex items-center z-10 shadow-sm border border-blue-200 dark:border-blue-800">
+                <span className="mr-1">Selection Active</span>
+                <button 
+                  onClick={() => clearSelection()}
+                  className="text-blue-600 dark:text-blue-300 hover:text-blue-800 dark:hover:text-blue-100 ml-1"
+                  title="Clear selection"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
             <button
               onClick={() => setChatMessages([])}
               className="absolute top-3 right-3 text-xs text-slate-500 dark:text-slate-400 hover:text-red-500 bg-white dark:bg-slate-700 px-2 py-1 rounded-md border border-slate-200 dark:border-slate-600 z-10 shadow-sm"
@@ -197,7 +232,7 @@ export default function Chat({
 
       <div className="border-t border-slate-200 dark:border-slate-700 p-3">
         <div className="flex items-center gap-2 mb-2">
-          {isClient && (selectedText || savedSelection) && (
+          {(isSelectionActive || savedSelection) && (
             <button
               onClick={() => {
                 // Toggle the selection state
@@ -231,7 +266,7 @@ export default function Chat({
             </button>
           )}
           
-          {aiResponse && (
+          {aiResponse && (isSelectionActive || selectionRange) && (
             <button
               onClick={replaceSelectedText}
               className="text-xs px-2 py-1 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded flex items-center gap-1 hover:bg-green-200 dark:hover:bg-green-800 transition-colors"
@@ -259,6 +294,9 @@ export default function Chat({
                 e.preventDefault();
                 if (!isLoading && content.trim()) {
                   if (chatMessages.length > 0) {
+                    // Process the message with selection awareness
+                    const processedContent = processSelectionInMessage(content);
+                    setContent(processedContent);
                     handleChatSend();
                   } else {
                     handleGenerateContent();

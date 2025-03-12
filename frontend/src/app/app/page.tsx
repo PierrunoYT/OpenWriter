@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTheme } from '../../utils/ThemeContext';
+import { SelectionProvider, useSelection } from '@/utils/selectionContext';
 import Chat from './components/Chat';
 import Header from '../../components/layout/Header';
 import Sidebar from '../../components/layout/Sidebar';
@@ -33,8 +34,45 @@ export default function EditorPage() {
   const [editorContent, setEditorContent] = useState<string>('');
   const [chatInput, setChatInput] = useState<string>('');
   const [aiResponse, setAiResponse] = useState<string>('');
-  const [selectedText, setSelectedText] = useState<string>('');
-  const [selectionRange, setSelectionRange] = useState<{start: number, end: number} | null>(null);
+  const editorRef = useRef<HTMLTextAreaElement>(null);
+  
+  // Selection handling functions
+  const handleTextSelection = (e: React.SyntheticEvent) => {
+    try {
+      const target = e.target as HTMLTextAreaElement;
+      const selectionStart = target.selectionStart;
+      const selectionEnd = target.selectionEnd;
+      
+      if (selectionStart !== undefined && selectionEnd !== undefined) {
+        if (selectionStart !== selectionEnd) {
+          const selectedText = editorContent.substring(selectionStart, selectionEnd);
+          setSelectedText(selectedText);
+          setSelectionRange({ start: selectionStart, end: selectionEnd });
+          // Store in localStorage for persistence
+          localStorage.setItem('savedSelectedText', selectedText);
+        }
+      }
+    } catch (error) {
+      console.error('Error handling text selection:', error);
+    }
+  };
+  
+  const replaceSelectedText = (newText: string = aiResponse) => {
+    if (!selectionRange) return;
+    
+    const before = editorContent.substring(0, selectionRange.start);
+    const after = editorContent.substring(selectionRange.end);
+    const newContent = before + newText + after;
+    
+    setEditorContent(newContent);
+    
+    // Focus the editor and set cursor position after the inserted text
+    if (editorRef.current) {
+      editorRef.current.focus();
+      const newCursorPosition = selectionRange.start + newText.length;
+      editorRef.current.setSelectionRange(newCursorPosition, newCursorPosition);
+    }
+  };
   const [isClient, setIsClient] = useState(false);
   
   // Use localStorage to persist selected text safely
@@ -846,9 +884,10 @@ export default function EditorPage() {
   };
 
   return (
-    <div 
-      className={`min-h-screen h-screen overflow-hidden flex flex-col bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 text-slate-800 dark:text-slate-100 ${theme === 'dark' ? 'theme-dark' : 'theme-light'}`}
-      data-theme={theme}>
+    <SelectionProvider>
+      <div 
+        className={`min-h-screen h-screen overflow-hidden flex flex-col bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 text-slate-800 dark:text-slate-100 ${theme === 'dark' ? 'theme-dark' : 'theme-light'}`}
+        data-theme={theme}>
       <Header 
         showSidebar={showSidebar}
         setShowSidebar={setShowSidebar}
@@ -905,6 +944,7 @@ export default function EditorPage() {
               <div className="flex-1 overflow-hidden bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
                 <div className="p-4 h-full">
                   <textarea
+                    ref={editorRef}
                     className="w-full h-full p-3 bg-transparent focus:outline-none resize-none"
                     placeholder="Start writing here or paste your text to analyze, edit, or improve..."
                     value={editorContent}
@@ -915,16 +955,13 @@ export default function EditorPage() {
                         e.stopPropagation();
                       }
                     }}
-                    onSelect={(e) => {
-                      const target = e.target as HTMLTextAreaElement;
-                      const selectedText = editorContent.substring(target.selectionStart, target.selectionEnd);
-                      if (selectedText.trim()) {
-                        setSelectedText(selectedText);
-                        localStorage.setItem('savedSelectedText', selectedText);
-                        setSelectionRange({
-                          start: target.selectionStart,
-                          end: target.selectionEnd
-                        });
+                    onSelect={handleTextSelection}
+                    onMouseUp={handleTextSelection}
+                    onKeyUp={(e) => {
+                      // Only trigger on arrow keys, delete, backspace to avoid unnecessary processing
+                      const keysTrigger = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Delete', 'Backspace'];
+                      if (keysTrigger.includes(e.key)) {
+                        handleTextSelection(e);
                       }
                     }}
                   ></textarea>
@@ -982,6 +1019,7 @@ export default function EditorPage() {
           <span>{new Date().getFullYear()} OpenWriter</span>
         </p>
       </footer>
-    </div>
+      </div>
+    </SelectionProvider>
   );
 }
