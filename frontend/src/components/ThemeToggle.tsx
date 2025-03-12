@@ -21,7 +21,7 @@ export function ThemeToggle() {
   const themeLabel = {
     'light': 'Light Mode',
     'dark': 'Dark Mode',
-    'system': 'System Theme'
+    'system': 'System Theme (Auto)'
   }[theme];
 
   return (
@@ -33,9 +33,9 @@ export function ThemeToggle() {
           ? 'bg-slate-700 hover:bg-slate-600 text-slate-200' 
           : theme === 'light' 
             ? 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-            : 'bg-gradient-to-r from-slate-200 to-slate-300 dark:from-slate-700 dark:to-slate-600 hover:from-slate-300 hover:to-slate-400 dark:hover:from-slate-600 dark:hover:to-slate-500 text-slate-700 dark:text-slate-200'
+            : 'bg-gradient-to-r from-blue-100 to-indigo-100 dark:from-blue-900 dark:to-indigo-900 hover:from-blue-200 hover:to-indigo-200 dark:hover:from-blue-800 dark:hover:to-indigo-800 text-slate-700 dark:text-slate-200'
         }`}
-      title={`${themeLabel} - Click to change`}
+      title={`${themeLabel}${theme === 'system' ? ' - Follows your device settings' : ''} - Click to change`}
       aria-label={`Current theme: ${themeLabel}. Click to toggle.`}
     >
       <div className="relative w-5 h-5 flex items-center justify-center">
@@ -72,17 +72,16 @@ export function ThemeToggle() {
           ${theme === 'system' 
             ? 'opacity-100 scale-100 rotate-0' 
             : 'opacity-0 scale-50 rotate-90'}`}>
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="4"></circle>
-            <path d="M12 3v1"></path>
-            <path d="M12 20v1"></path>
-            <path d="M3 12h1"></path>
-            <path d="M20 12h1"></path>
-            <path d="m18.364 5.636-.707.707"></path>
-            <path d="m6.343 17.657-.707.707"></path>
-            <path d="m5.636 5.636.707.707"></path>
-            <path d="m17.657 17.657.707.707"></path>
-          </svg>
+          <div className="relative">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+              <line x1="8" y1="21" x2="16" y2="21"></line>
+              <line x1="12" y1="17" x2="12" y2="21"></line>
+            </svg>
+            <div className="absolute -top-1 -right-1 flex items-center justify-center">
+              <div className="w-3 h-3 rounded-full bg-blue-400 dark:bg-blue-500 animate-pulse"></div>
+            </div>
+          </div>
         </div>
       </div>
     </button>
