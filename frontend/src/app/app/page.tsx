@@ -313,6 +313,10 @@ export default function EditorPage() {
         setChatMessages(errorMessages);
       } finally {
         setIsLoading(false);
+        // Clear the selection flag after the request is complete
+        if (localStorage.getItem('useSelectedText') === 'true') {
+          localStorage.removeItem('useSelectedText');
+        }
       }
     } catch (error) {
       console.error('Error in conversation/message setup:', error);
