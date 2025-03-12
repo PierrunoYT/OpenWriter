@@ -264,7 +264,7 @@ export default function Chat({
             </button>
           )}
           
-          {aiResponse && (isSelectionActive || selectionRange) && (
+          {aiResponse && isSelectionActive && (
             <button
               onClick={replaceSelectedText}
               className="text-xs px-2 py-1 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded flex items-center gap-1 hover:bg-green-200 dark:hover:bg-green-800 transition-colors"
