@@ -246,7 +246,7 @@ export default function EditorPage() {
         
         // Get the selected text from state or localStorage
         const textToUse = useSelectedText ? 
-          (selectedText.trim() || savedSelectedText || '') : 
+          (savedSelectedText || '') : 
           editorContent.trim();
         
         // Include selected text or full editor content in the system prompt for context
