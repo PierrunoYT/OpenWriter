@@ -1,4 +1,5 @@
 import express from 'express';
+import axios from 'axios';
 import { getGenerationInfo } from '../../utils/openrouter';
 
 const router = express.Router();
@@ -24,7 +25,7 @@ router.get('/generation/:id', async (req, res) => {
         type: 'not_found' 
       });
     }
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error getting generation info:', error);
     
     // Handle specific errors
