@@ -157,93 +157,9 @@ export async function generateTextDirectAPI(
       stream: isStreaming,
     };
     
-    if (options.responseFormat) {
-      requestBody.response_format = options.responseFormat;
-    }
-    
-    if (options.structured_outputs !== undefined) {
-      requestBody.structured_outputs = options.structured_outputs;
-    }
-    
-    if (options.tools && options.tools.length > 0) {
-      requestBody.tools = options.tools;
-    }
-    
-    if (options.toolChoice) {
-      requestBody.tool_choice = options.toolChoice;
-    }
-    
-    if (options.seed !== undefined) {
-      requestBody.seed = options.seed;
-    }
-    
-    if (options.top_p !== undefined) {
-      requestBody.top_p = options.top_p;
-    }
-    
-    if (options.top_k !== undefined) {
-      requestBody.top_k = options.top_k;
-    }
-    
-    if (options.frequency_penalty !== undefined) {
-      requestBody.frequency_penalty = options.frequency_penalty;
-    }
-    
-    if (options.presence_penalty !== undefined) {
-      requestBody.presence_penalty = options.presence_penalty;
-    }
-    
-    if (options.repetition_penalty !== undefined) {
-      requestBody.repetition_penalty = options.repetition_penalty;
-    }
-    
-    if (options.logit_bias) {
-      requestBody.logit_bias = options.logit_bias;
-    }
-    
-    if (options.logprobs !== undefined) {
-      requestBody.logprobs = options.logprobs;
-    }
-    
-    if (options.top_logprobs !== undefined) {
-      requestBody.top_logprobs = options.top_logprobs;
-    }
-    
-    if (options.min_p !== undefined) {
-      requestBody.min_p = options.min_p;
-    }
-    
-    if (options.top_a !== undefined) {
-      requestBody.top_a = options.top_a;
-    }
-    
-    if (options.stop) {
-      requestBody.stop = options.stop;
-    }
-    
-    if (options.prediction) {
-      requestBody.prediction = options.prediction;
-    }
-    
-    if (options.transforms && options.transforms.length > 0) {
-      requestBody.transforms = options.transforms;
-    }
-    
-    if (options.models && options.models.length > 0) {
-      requestBody.models = options.models;
-    }
-    
-    if (options.route) {
-      requestBody.route = options.route;
-    }
-    
-    if (options.provider) {
-      requestBody.provider = options.provider;
-    }
-    
-    if (options.max_price) {
-      requestBody.max_price = options.max_price;
-    }
+    // Apply common parameters using the shared utility function
+    import { applyCommonRequestParameters } from './utils';
+    applyCommonRequestParameters(requestBody, options);
     
     if (isStreaming && res) {
       res.setHeader('Content-Type', 'text/event-stream');
@@ -286,34 +202,55 @@ export async function generateTextDirectAPI(
       
       // Return a promise that resolves when the stream ends
       return new Promise<void>((resolve, reject) => {
-        response.data.on('end', () => {
+        // Store event handlers so we can remove them later
+        const onEnd = () => {
           // Ensure we end the response if it hasn't been ended yet
           if (!res.writableEnded) {
             res.end();
           }
+          cleanup();
           resolve();
-        });
-        response.data.on('error', (err) => {
+        };
+        
+        const onError = (err: Error) => {
           // Only reject if we haven't already handled the error
           if (!res.writableEnded) {
+            cleanup();
             reject(err);
           } else {
             // If we've already ended the response, just log the error
             console.error('Additional stream error after response ended:', err);
+            cleanup();
             resolve(); // Resolve anyway since we've handled the client response
           }
-        });
+        };
+        
+        const onAbort = () => {
+          console.log('Request aborted, cleaning up direct API stream');
+          if (!res.writableEnded) {
+            res.end();
+          }
+          cleanup();
+          resolve(); // Resolve the promise to prevent hanging
+        };
+        
+        // Add event listeners
+        response.data.on('end', onEnd);
+        response.data.on('error', onError);
         
         // Handle abort signal
         if (axiosConfig.signal) {
-          axiosConfig.signal.addEventListener('abort', () => {
-            console.log('Request aborted, cleaning up direct API stream');
-            if (!res.writableEnded) {
-              res.end();
-            }
-            resolve(); // Resolve the promise to prevent hanging
-          }, { once: true });
+          axiosConfig.signal.addEventListener('abort', onAbort, { once: true });
         }
+        
+        // Cleanup function to remove all event listeners
+        const cleanup = () => {
+          response.data.removeListener('end', onEnd);
+          response.data.removeListener('error', onError);
+          if (axiosConfig.signal) {
+            axiosConfig.signal.removeEventListener('abort', onAbort);
+          }
+        };
       });
     } else {
       const response = await axios.post(

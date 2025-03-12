@@ -28,19 +28,9 @@ router.get('/generation/:id', async (req, res) => {
     console.error('Error getting generation info:', error);
     
     // Handle specific errors
-    if (error && typeof error === 'object' && 'response' in error && error.response && typeof error.response === 'object') {
-      const status = 'status' in error.response ? error.response.status as number : 500;
-      const errorMessage = error.response && 
-                          typeof error.response === 'object' && 
-                          'data' in error.response && 
-                          error.response.data && 
-                          typeof error.response.data === 'object' && 
-                          'error' in error.response.data && 
-                          error.response.data.error && 
-                          typeof error.response.data.error === 'object' && 
-                          'message' in error.response.data.error
-                           ? String(error.response.data.error.message)
-                           : 'Failed to retrieve generation info';
+    if (axios.isAxiosError(error)) {
+      const status = error.response?.status || 500;
+      const errorMessage = error.response?.data?.error?.message || 'Failed to retrieve generation info';
       
       res.status(status).json({ 
         error: errorMessage,

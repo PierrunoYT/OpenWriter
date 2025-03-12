@@ -174,7 +174,9 @@ router.get('/models', async (req: Request, res: Response) => {
       
       // Format the response to match OpenRouter API format
       res.json({ 
-        data: fallbackModels
+        data: fallbackModels,
+        status: 'success',
+        source: 'fallback'
       });
     }
   } catch (error) {

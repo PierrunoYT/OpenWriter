@@ -3,6 +3,23 @@ import { getRateLimits } from '../../utils/openrouter/getRateLimits';
 
 const router = express.Router();
 
+interface EnhancedRateLimitInfo {
+  label: string;
+  usage: number;
+  limit: number | null;
+  is_free_tier: boolean;
+  rate_limit: {
+    requests: number;
+    interval: string;
+  };
+  remaining_credits: number | null;
+  effective_rate_limit: {
+    requests_per_second: number;
+    interval_seconds: number;
+  };
+  can_use_free_models: boolean;
+}
+
 router.get('/limits', async (req, res) => {
   try {
     const rateLimitInfo = await getRateLimits();
@@ -32,13 +49,16 @@ router.get('/limits', async (req, res) => {
       : rateLimitInfo.rate_limit.requests;
     
     res.json({
-      ...rateLimitInfo,
-      remaining_credits: remainingCredits,
-      effective_rate_limit: {
-        requests_per_second: effectiveRateLimit,
-        interval_seconds: intervalSeconds
-      },
-      can_use_free_models: rateLimitInfo.is_free_tier || (remainingCredits !== null ? remainingCredits > 0 : true)
+      status: 'success',
+      data: {
+        ...rateLimitInfo,
+        remaining_credits: remainingCredits,
+        effective_rate_limit: {
+          requests_per_second: effectiveRateLimit,
+          interval_seconds: intervalSeconds
+        },
+        can_use_free_models: rateLimitInfo.is_free_tier || (remainingCredits !== null ? remainingCredits > 0 : true)
+      }
     });
   } catch (error) {
     console.error('Error getting rate limits:', error);

@@ -127,6 +127,42 @@ router.post('/', checkCreditsMiddleware, async (req: Request, res: Response): Pr
       return;
     }
     
+    // Validate model format
+    if (!model.includes('/')) {
+      res.status(400).json({
+        error: {
+          message: 'Invalid model ID format. Expected format: provider/model-name',
+          code: 400,
+          type: 'bad_request'
+        }
+      });
+      return;
+    }
+    
+    // Validate temperature if provided
+    if (temperature !== undefined && (typeof temperature !== 'number' || temperature < 0 || temperature > 2)) {
+      res.status(400).json({
+        error: {
+          message: 'Temperature must be a number between 0 and 2',
+          code: 400,
+          type: 'bad_request'
+        }
+      });
+      return;
+    }
+    
+    // Validate max_tokens if provided
+    if (max_tokens !== undefined && (typeof max_tokens !== 'number' || max_tokens <= 0)) {
+      res.status(400).json({
+        error: {
+          message: 'max_tokens must be a positive number',
+          code: 400,
+          type: 'bad_request'
+        }
+      });
+      return;
+    }
+    
     // Forward to generate endpoint with the same parameters
     try {
       // Handle streaming requests

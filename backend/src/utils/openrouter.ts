@@ -4,6 +4,7 @@ import { getGenerationInfo } from './openrouter/getGenerationInfo';
 import { getRateLimits } from './openrouter/getRateLimits';
 import { generateTextCompletion } from './openrouter/generateTextCompletion';
 import { streamTextCompletion } from './openrouter/streamTextCompletion';
+import { applyCommonRequestParameters, createStandardizedError } from './openrouter/utils';
 
 export {
   generateText,
@@ -12,4 +13,6 @@ export {
   getRateLimits,
   generateTextCompletion,
   streamTextCompletion,
+  applyCommonRequestParameters,
+  createStandardizedError
 };
