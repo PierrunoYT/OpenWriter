@@ -180,16 +180,23 @@ export default function Chat({
           {selectedText && (
             <button
               onClick={() => {
-                setContent(`Analyze this selected text: ${selectedText.substring(0, 50)}${selectedText.length > 50 ? '...' : ''}`);
+                // Instead of setting content, just indicate that selection is being used
+                localStorage.setItem('useSelectedText', 'true');
+                // Show a toast or some visual feedback
+                alert('Selected text will be used as context for your next message');
               }}
-              className="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded flex items-center gap-1 hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
-              title="Reference the selected text in your editor"
+              className={`text-xs px-2 py-1 rounded flex items-center gap-1 transition-colors ${
+                localStorage.getItem('useSelectedText') 
+                  ? 'bg-blue-500 text-white hover:bg-blue-600' 
+                  : 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800'
+              }`}
+              title="Use the selected text as context for your next message"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
                 <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
               </svg>
-              Reference Selection
+              {localStorage.getItem('useSelectedText') ? 'Selection Active' : 'Use Selection'}
             </button>
           )}
           

@@ -186,10 +186,13 @@ export default function EditorPage() {
       setChatMessages([...updatedMessages, thinkingMessage]);
       
       try {
+        // Check if we should use selected text
+        const useSelectedText = localStorage.getItem('useSelectedText') === 'true';
+        
         // Include selected text or full editor content in the system prompt for context
         const messagesForAPI = [
           { role: 'system', content: systemPrompt + 
-            (selectedText.trim() ? 
+            (useSelectedText && selectedText.trim() ? 
               "\n\nThe user has selected the following text in their editor:\n\n" + selectedText : 
               editorContent.trim() ? 
                 "\n\nThe user has the following text in their editor:\n\n" + editorContent : 
@@ -197,6 +200,11 @@ export default function EditorPage() {
           },
           ...updatedMessages // Include conversation history
         ];
+        
+        // Clear the selection flag after using it
+        if (useSelectedText) {
+          localStorage.removeItem('useSelectedText');
+        }
         
         console.log('Sending chat message with system prompt and user message');
         
