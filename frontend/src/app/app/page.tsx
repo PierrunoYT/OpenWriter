@@ -7,6 +7,7 @@ import Header from '../../components/layout/Header';
 import Sidebar from '../../components/layout/Sidebar';
 import AppControls from '../../components/controls/AppControls';
 import { ErrorWithDetails } from '@/types/errors';
+import { OPENROUTER_API_URL } from '@/config/api';
 
 // Define types for models
 interface Model {
@@ -606,9 +607,6 @@ export default function EditorPage() {
     }
   };
 
-  // Import API configuration
-  import { OPENROUTER_API_URL } from '@/config/api';
-  
   // Use the centralized API URL
   const API_BASE_URL = OPENROUTER_API_URL;
   
