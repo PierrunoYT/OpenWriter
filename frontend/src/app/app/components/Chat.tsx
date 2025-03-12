@@ -13,7 +13,6 @@ export default function Chat({
   content,
   setContent,
   aiResponse,
-  setAiResponse,
   isLoading,
   // Since these props are required by the component's interface but not directly used in this component,
   // we'll keep them in the interface but mark them with an underscore to indicate they're not used here
@@ -26,7 +25,6 @@ export default function Chat({
   content: string;
   setContent: (content: string) => void;
   aiResponse: string;
-  setAiResponse: (response: string) => void;
   isLoading: boolean;
   chatMessages: ChatMessage[];
   setChatMessages: (messages: ChatMessage[]) => void;
