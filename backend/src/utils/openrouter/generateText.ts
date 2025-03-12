@@ -158,6 +158,21 @@ function prepareMessagesWithCaching(messages: Message[], model: string, enableCa
           ]
         };
       }
+    } else if (Array.isArray(message.content)) {
+      // Handle array content (multimodal messages)
+      return {
+        ...message,
+        content: message.content.map(part => {
+          if (part.type === 'text' && typeof part.text === 'string' && part.text.length > 1000) {
+            return {
+              type: 'text',
+              text: part.text.substring(0, 100),
+              cache_control: { type: 'ephemeral' }
+            };
+          }
+          return part;
+        })
+      };
     }
     return message;
   });

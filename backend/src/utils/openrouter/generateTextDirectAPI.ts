@@ -286,10 +286,48 @@ export async function generateTextDirectAPI(
         }
       );
       
+      // Set up error handling for the stream
+      response.data.on('error', (error: Error) => {
+        console.error('Stream error in direct API:', error);
+        if (!res.writableEnded) {
+          res.write(`data: ${JSON.stringify({ error: 'Stream error occurred' })}\n\n`);
+          res.end();
+        }
+      });
+      
+      // Pipe the response to the client
       response.data.pipe(res);
+      
+      // Return a promise that resolves when the stream ends
       return new Promise<void>((resolve, reject) => {
-        response.data.on('end', () => resolve());
-        response.data.on('error', reject);
+        response.data.on('end', () => {
+          // Ensure we end the response if it hasn't been ended yet
+          if (!res.writableEnded) {
+            res.end();
+          }
+          resolve();
+        });
+        response.data.on('error', (err) => {
+          // Only reject if we haven't already handled the error
+          if (!res.writableEnded) {
+            reject(err);
+          } else {
+            // If we've already ended the response, just log the error
+            console.error('Additional stream error after response ended:', err);
+            resolve(); // Resolve anyway since we've handled the client response
+          }
+        });
+        
+        // Handle abort signal
+        if (axiosConfig.signal) {
+          axiosConfig.signal.addEventListener('abort', () => {
+            console.log('Request aborted, cleaning up direct API stream');
+            if (!res.writableEnded) {
+              res.end();
+            }
+            resolve(); // Resolve the promise to prevent hanging
+          }, { once: true });
+        }
       });
     } else {
       const response = await axios.post(

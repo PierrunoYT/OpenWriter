@@ -7,12 +7,6 @@ const router = express.Router();
 
 // Rate limit checking middleware for more expensive models
 const checkCreditsMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  // Skip for non-generate routes
-  if (!req.path.includes('/generate')) {
-    next();
-    return;
-  }
-  
   // Skip for streaming requests as those have their own credit handling
   if (req.body.stream) {
     next();
@@ -58,9 +52,22 @@ const checkCreditsMiddleware = async (req: Request, res: Response, next: NextFun
 };
 
 // Chat completions endpoint that exactly matches OpenRouter's API path
-router.post('/chat/completions', checkCreditsMiddleware, async (req: Request, res: Response): Promise<void> => {
-  // This endpoint is an alias to /generate but ensures API compatibility with OpenRouter
-  // Forward the request to our existing implementation
+router.post('/', checkCreditsMiddleware, async (req: Request, res: Response): Promise<void> => {
+  // Create AbortController for all requests
+  const abortController = new AbortController();
+  
+  // Handle client disconnect for cancelation
+  req.on('close', () => {
+    console.log('Client closed connection, aborting chat request');
+    abortController.abort();
+  });
+  
+  // Set up request timeout
+  const requestTimeout = setTimeout(() => {
+    console.log('Chat request timeout reached, aborting');
+    abortController.abort();
+  }, 300000); // 5 minute timeout for non-streaming requests
+  
   try {
     const {
       messages,
@@ -107,63 +114,283 @@ router.post('/chat/completions', checkCreditsMiddleware, async (req: Request, re
       }
     }
     
-    // Create a new request object to pass to the generate endpoint handler
-    const generateRequest = {
-      ...req,
-      body: {
-        messages,
-        prompt,
-        model,
-        temperature,
-        max_tokens,
-        stream,
-        enableCaching,
-        responseFormat,
-        structured_outputs,
-        tools,
-        toolChoice,
-        seed,
-        top_p,
-        top_k,
-        frequency_penalty,
-        presence_penalty,
-        repetition_penalty,
-        logit_bias,
-        logprobs,
-        top_logprobs,
-        min_p,
-        top_a,
-        prediction,
-        transforms,
-        models,
-        route,
-        provider,
-        stop,
-        max_price
+    // Forward to generate endpoint with the same parameters
+    try {
+      // Handle streaming requests
+      if (stream) {
+        // Set up streaming headers
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+        
+        // Set up cancellation support through AbortController
+        let lastActivity = Date.now();
+        const keepAliveInterval = setInterval(() => {
+          const now = Date.now();
+          if (now - lastActivity > 15000) { // 15 seconds since last activity
+            res.write(': OPENROUTER PROCESSING\n\n');
+            lastActivity = now;
+          }
+        }, 15000);
+        
+        try {
+          // Try OpenAI SDK for streaming
+          const stream = await generateText(
+            messages || [{ role: 'user', content: prompt }], 
+            {
+              model,
+              temperature,
+              max_tokens,
+              stream: true,
+              enableCaching: enableCaching !== false,
+              responseFormat,
+              structured_outputs,
+              tools,
+              toolChoice,
+              seed,
+              top_p,
+              top_k,
+              frequency_penalty,
+              presence_penalty,
+              repetition_penalty,
+              logit_bias,
+              logprobs,
+              top_logprobs,
+              min_p,
+              top_a,
+              prediction,
+              transforms,
+              models,
+              route,
+              provider,
+              stop,
+              max_price
+            },
+            { signal: abortController.signal }
+          );
+          
+          // Stream the response
+          try {
+            for await (const chunk of stream) {
+              if (abortController.signal.aborted) {
+                break;
+              }
+              
+              // Update activity timestamp
+              lastActivity = Date.now();
+              
+              // Send the chunk
+              res.write(`data: ${JSON.stringify(chunk)}\n\n`);
+            }
+            
+            // Stream completed successfully
+            res.write('data: [DONE]\n\n');
+          } catch (streamError) {
+            console.error('Error during streaming:', streamError);
+            
+            // Only send error if not aborted and connection is still open
+            if (!abortController.signal.aborted && !res.writableEnded) {
+              res.write(`data: ${JSON.stringify({ error: 'Stream interrupted' })}\n\n`);
+            }
+          } finally {
+            clearInterval(keepAliveInterval);
+            clearTimeout(requestTimeout);
+            res.end();
+          }
+        } catch (error) {
+          console.error('OpenAI SDK streaming failed, falling back to direct API:', error);
+          
+          // Fallback to direct API streaming with AbortController
+          try {
+            // Set up keep-alive interval
+            const keepAliveInterval = setInterval(() => {
+              const now = Date.now();
+              if (now - lastActivity > 15000 && !res.writableEnded) { // 15 seconds without activity
+                res.write(': OPENROUTER PROCESSING\n\n');
+                lastActivity = now;
+              }
+            }, 15000);
+            
+            // Make the streaming request with abort signal
+            const axiosConfig = {
+              signal: abortController.signal,
+              responseType: 'stream' as const
+            };
+            
+            // Start streaming using direct API
+            await generateTextDirectAPI(
+              messages || [{ role: 'user', content: prompt }],
+              {
+                model,
+                temperature,
+                max_tokens,
+                stream: true,
+                enableCaching: enableCaching !== false,
+                responseFormat,
+                structured_outputs,
+                tools,
+                toolChoice,
+                seed,
+                top_p,
+                top_k,
+                frequency_penalty,
+                presence_penalty,
+                repetition_penalty,
+                logit_bias,
+                logprobs,
+                top_logprobs,
+                min_p,
+                top_a,
+                prediction,
+                transforms,
+                models,
+                route,
+                provider,
+                stop,
+                max_price
+              },
+              res, // Pass response object for direct streaming
+              axiosConfig
+            );
+            
+            // Cleanup
+            clearInterval(keepAliveInterval);
+            clearTimeout(requestTimeout);
+          } catch (streamError) {
+            clearTimeout(requestTimeout);
+            
+            // Only send error if not aborted and connection is still open
+            if (!abortController.signal.aborted && !res.writableEnded) {
+              console.error('Direct API streaming failed:', streamError);
+              res.write(`data: ${JSON.stringify({ error: 'Streaming failed' })}\n\n`);
+              res.end();
+            }
+          }
+        }
+        
+        return;
       }
-    };
-    
-    // Call the existing generate endpoint handler
-    // We're using req.next to pass control to our existing handler
-    const newUrl = '/generate';
-    const newOriginalUrl = req.originalUrl.replace('/chat/completions', '/generate');
-    
-    // Create a new request object with the modified properties
-    const modifiedRequest = {
-      ...generateRequest,
-      url: newUrl,
-      originalUrl: newOriginalUrl
-    };
-
-    req.app._router.handle(modifiedRequest, res, () => {});
+      
+      // Handle non-streaming requests
+      const result = await generateText(
+        messages || [{ role: 'user', content: prompt }], 
+        { 
+          model, 
+          temperature, 
+          max_tokens,
+          stream: false,
+          enableCaching: enableCaching !== false,
+          responseFormat,
+          structured_outputs,
+          tools,
+          toolChoice,
+          seed,
+          top_p,
+          top_k,
+          frequency_penalty,
+          presence_penalty,
+          repetition_penalty,
+          logit_bias,
+          logprobs,
+          top_logprobs,
+          min_p,
+          top_a,
+          prediction,
+          transforms,
+          models,
+          route,
+          provider,
+          stop,
+          max_price
+        },
+        { signal: abortController.signal }
+      );
+      
+      // Clear timeout as request completed successfully
+      clearTimeout(requestTimeout);
+      
+      // Add metadata to response
+      const responseData = {
+        ...result,
+        caching_enabled: enableCaching !== false,
+        provider: model ? model.split('/')[0] : 'unknown'
+      };
+      
+      if (!res.writableEnded) {
+        res.json(responseData);
+      }
+    } catch (error: any) {
+      // Clear timeout
+      clearTimeout(requestTimeout);
+      
+      // Don't respond if the request was aborted or already ended
+      if (abortController.signal.aborted || res.writableEnded) {
+        return;
+      }
+      
+      console.error('Error in chat completions:', error);
+      
+      // Handle enhanced errors
+      if (error.type || error.code) {
+        const statusCode = error.code || error.status || 500;
+        const errorType = error.type || 'unknown';
+        
+        const errorResponse: any = { 
+          error: { 
+            message: error.message,
+            type: errorType,
+            code: statusCode
+          }
+        };
+        
+        // Add additional details for moderation errors
+        if (errorType === 'moderation' && error.reasons) {
+          errorResponse.error.reasons = error.reasons;
+          errorResponse.error.flagged_input = error.flagged_input;
+          errorResponse.error.provider = error.provider;
+        }
+        
+        // Add provider details for provider errors
+        if (errorType === 'provider_error' && error.provider) {
+          errorResponse.error.provider = error.provider;
+          if (error.raw_error) {
+            errorResponse.error.raw_provider_error = error.raw_error;
+          }
+        }
+        
+        res.status(statusCode).json(errorResponse);
+        return;
+      }
+      
+      // Generic error response
+      res.status(500).json({ 
+        error: { 
+          message: error.message || 'Internal server error processing chat completions request',
+          code: 500,
+          type: 'server_error'
+        }
+      });
+    }
   } catch (error) {
+    // Clear timeout in case of error
+    clearTimeout(requestTimeout);
+    
+    // Don't respond if the request was aborted or already ended
+    if (abortController.signal.aborted || res.writableEnded) {
+      return;
+    }
+    
     console.error('Error in chat/completions route:', error);
     res.status(500).json({ 
       error: { 
         message: 'Internal server error processing chat completions request',
-        code: 500
+        code: 500,
+        type: 'server_error'
       } 
     });
+  } finally {
+    // Make sure timeout is cleared
+    clearTimeout(requestTimeout);
   }
 });
 
