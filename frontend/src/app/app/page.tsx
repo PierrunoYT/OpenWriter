@@ -185,7 +185,7 @@ export default function EditorPage() {
       try {
         // Prepare all messages for context
         const messagesForAPI = [
-          { role: 'system', content: systemPrompt + (content.trim() ? 
+          { role: 'system', content: systemPrompt + (localStorage.getItem('useEditorText') && content.trim() ? 
             "\n\nThe user has the following text in their editor that they may reference:\n\n" + content : "") 
           },
           ...updatedMessages // Include conversation history
