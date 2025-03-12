@@ -34,9 +34,11 @@ export default function EditorPage() {
   const [aiResponse, setAiResponse] = useState<string>('');
   const [selectedText, setSelectedText] = useState<string>('');
   const [selectionRange, setSelectionRange] = useState<{start: number, end: number} | null>(null);
+  const [isClient, setIsClient] = useState(false);
   
-  // Use localStorage to persist selected text
+  // Use localStorage to persist selected text safely
   useEffect(() => {
+    setIsClient(true);
     // Load any saved selection on component mount
     const savedSelection = localStorage.getItem('savedSelectedText');
     if (savedSelection) {
@@ -195,12 +197,13 @@ export default function EditorPage() {
       setChatMessages([...updatedMessages, thinkingMessage]);
       
       try {
-        // Always use selected text if available and the selection flag is set
-        const useSelectedText = localStorage.getItem('useSelectedText') === 'true';
+        // Get localStorage values safely on client side only
+        const useSelectedText = isClient ? localStorage.getItem('useSelectedText') === 'true' : false;
+        const savedSelectedText = isClient ? localStorage.getItem('savedSelectedText') : null;
         
         // Get the selected text from state or localStorage
         const textToUse = useSelectedText ? 
-          (selectedText.trim() || localStorage.getItem('savedSelectedText') || '') : 
+          (selectedText.trim() || savedSelectedText || '') : 
           editorContent.trim();
         
         // Include selected text or full editor content in the system prompt for context
@@ -215,7 +218,7 @@ export default function EditorPage() {
           },
           ...updatedMessages // Include conversation history
         ];
-        
+
         // Don't clear the selection flag until after the request is complete
         
         console.log('Sending chat message with system prompt and user message');
@@ -329,7 +332,7 @@ export default function EditorPage() {
       } finally {
         setIsLoading(false);
         // Clear the selection flag after the request is complete
-        if (localStorage.getItem('useSelectedText') === 'true') {
+        if (isClient && localStorage.getItem('useSelectedText') === 'true') {
           localStorage.removeItem('useSelectedText');
           // Don't remove the saved selection text yet, in case they want to use it again
         }
@@ -764,6 +767,28 @@ export default function EditorPage() {
     { id: 'meeting-notes', name: 'Meeting Summaries', prompt: 'You are an executive-level meeting documentation specialist trained in the Cornell note-taking system and strategic communication. Create impeccably organized meeting summaries and minutes that transform lengthy discussions into actionable intelligence. Structure content with a clear executive summary, key discussion points, and decision log. Develop action items with specific assignees, deadlines, and success criteria. Use objective, clear language that maintains important context and nuance while eliminating non-essential content. Implement strategic information hierarchies that highlight critical business implications and risk factors. Include follow-up frameworks, resource requirements, and accountability tracking. Tailor documentation style based on meeting type (decision-making, brainstorming, status update, strategic planning) while maintaining comprehensive but concise coverage that serves both participants and non-attendees.' },
   ];
 
+  // Set up document click handler to prevent selection clearing
+  useEffect(() => {
+    const handleDocumentClick = (e: MouseEvent) => {
+      if (localStorage.getItem('useSelectedText') === 'true') {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+
+    document.addEventListener('click', handleDocumentClick);
+    return () => document.removeEventListener('click', handleDocumentClick);
+  }, []);
+
+  // Add click handler to prevent text selection from being cleared
+  const handleAppClick = (e: React.MouseEvent) => {
+    // Only prevent default if we have an active selection
+    if (localStorage.getItem('useSelectedText') === 'true') {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  };
+
   return (
     <div 
       className={`min-h-screen h-screen overflow-hidden flex flex-col bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 text-slate-800 dark:text-slate-100 ${theme === 'dark' ? 'theme-dark' : 'theme-light'}`}
@@ -828,6 +853,12 @@ export default function EditorPage() {
                     placeholder="Start writing here or paste your text to analyze, edit, or improve..."
                     value={editorContent}
                     onChange={(e) => setEditorContent(e.target.value)}
+                    onClick={(e) => {
+                      // Prevent click from clearing selection if selection is active
+                      if (localStorage.getItem('useSelectedText') === 'true') {
+                        e.stopPropagation();
+                      }
+                    }}
                     onSelect={(e) => {
                       const target = e.target as HTMLTextAreaElement;
                       const selectedText = editorContent.substring(target.selectionStart, target.selectionEnd);

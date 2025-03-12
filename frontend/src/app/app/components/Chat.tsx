@@ -50,6 +50,15 @@ export default function Chat({
   replaceSelectedText: () => void;
 }) {
   const { theme } = useTheme();
+  const [savedSelection, setSavedSelection] = useState<string | null>(null);
+  const [isClient, setIsClient] = useState(false);
+
+  // Update saved selection when component mounts on client
+  useEffect(() => {
+    setIsClient(true);
+    const saved = localStorage.getItem('savedSelectedText');
+    setSavedSelection(saved);
+  }, []);
 
   return (
     <div className="flex flex-col h-full">
@@ -177,7 +186,7 @@ export default function Chat({
 
       <div className="border-t border-slate-200 dark:border-slate-700 p-3">
         <div className="flex items-center gap-2 mb-2">
-          {(selectedText || localStorage.getItem('savedSelectedText')) && (
+          {isClient && (selectedText || savedSelection) && (
             <button
               onClick={() => {
                 // Toggle the selection state
@@ -197,7 +206,7 @@ export default function Chat({
                 }
               }}
               className={`text-xs px-2 py-1 rounded flex items-center gap-1 transition-colors ${
-                localStorage.getItem('useSelectedText') 
+                isClient && localStorage.getItem('useSelectedText') === 'true'
                   ? 'bg-blue-500 text-white hover:bg-blue-600' 
                   : 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800'
               }`}
@@ -207,7 +216,7 @@ export default function Chat({
                 <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
                 <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
               </svg>
-              {localStorage.getItem('useSelectedText') ? 'Selection Active' : 'Use Selection'}
+              {isClient && localStorage.getItem('useSelectedText') === 'true' ? 'Selection Active' : 'Use Selection'}
             </button>
           )}
           
