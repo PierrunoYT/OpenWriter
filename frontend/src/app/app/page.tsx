@@ -200,7 +200,7 @@ export default function EditorPage() {
           let errorDetails: ErrorWithDetails | null = null;
           try {
             errorDetails = await response.json();
-          } catch (_) {
+          } catch {
             // Couldn't parse JSON error response
           }
           
@@ -454,7 +454,7 @@ export default function EditorPage() {
         let errorDetails: ErrorWithDetails | null = null;
         try {
           errorDetails = await response.json();
-        } catch (_) {
+        } catch {
           // Couldn't parse JSON error response
         }
         
