@@ -41,14 +41,24 @@ export default function EditorPage() {
   const [selectedPromptId, setSelectedPromptId] = useState<string>('default');
   const [showSystemPrompt, setShowSystemPrompt] = useState<boolean>(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-  const [copyState, setCopyState] = useState<'default' | 'copied'>('default');
+  // Removed unused state variables: copyState, setCopyState
   
   // Conversation management
-  const [conversations, setConversations] = useState<any[]>([]);
+  interface Conversation {
+    id: number;
+    title: string;
+    model?: string;
+    system_prompt?: string;
+    created_at?: string;
+  }
+  
+  const [conversations, setConversations] = useState<Conversation[]>([]);
   const [currentConversation, setCurrentConversation] = useState<number | null>(null);
   const [showSidebar, setShowSidebar] = useState<boolean>(true);
-  const [newConversationTitle, setNewConversationTitle] = useState<string>('');
-  const [isCreatingConversation, setIsCreatingConversation] = useState<boolean>(false);
+  // State is used in createConversation but not directly in JSX
+  const [, setNewConversationTitle] = useState<string>('');
+  // State is used in createConversation but not directly in JSX
+  const [, setIsCreatingConversation] = useState<boolean>(false);
 
   // Fetch all conversations
   const fetchConversations = async () => {
@@ -84,8 +94,8 @@ export default function EditorPage() {
       
       // Update UI with conversation data
       setCurrentConversation(id);
-      setChatMessages(messagesData.messages ? messagesData.messages.map((msg: any) => ({
-        role: msg.role,
+      setChatMessages(messagesData.messages ? messagesData.messages.map((msg: {role: string; content: string}) => ({
+        role: msg.role as 'user' | 'assistant' | 'system',
         content: msg.content
       })) : []);
       
@@ -381,16 +391,9 @@ export default function EditorPage() {
   };
   
   // Clear chat messages (and optionally delete conversation)
-  const handleClearChat = () => {
-    setChatMessages([]);
-    
-    // If this is a saved conversation, prompt to delete it
-    if (currentConversation) {
-      if (confirm('Do you want to delete this conversation entirely?')) {
-        deleteConversation(currentConversation);
-      }
-    }
-  };
+  // This function is defined but not currently used in the UI
+  // Removing it since it's unused
+  // If needed in the future, it can be reimplemented
 
 
   const handleGenerateContent = async () => {
@@ -454,7 +457,7 @@ export default function EditorPage() {
           try {
             const jsonObject = JSON.parse(messageContent);
             messageContent = JSON.stringify(jsonObject, null, 2);
-          } catch (e) {
+          } catch {
             // Not valid JSON, leave as is
           }
         }
@@ -536,7 +539,14 @@ export default function EditorPage() {
         
         if (data.data && Array.isArray(data.data)) {
           // Transform the models to match our interface
-          const availableModels = data.data.map((model: any) => ({
+          const availableModels = data.data.map((model: {
+            id: string;
+            name?: string;
+            description?: string;
+            context_length?: number;
+            pricing?: { prompt: number; completion: number };
+            features?: string[];
+          }) => ({
             id: model.id,
             name: model.name || model.id,
             description: model.description || '',
