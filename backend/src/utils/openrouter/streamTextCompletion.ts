@@ -151,7 +151,13 @@ export async function streamTextCompletion(
     response.data.on('error', (error: Error) => {
       console.error('Stream error:', error);
       if (!res.writableEnded) {
-        res.write(`data: ${JSON.stringify({ error: 'Stream error occurred' })}\n\n`);
+        res.write(`data: ${JSON.stringify({ 
+          error: { 
+            message: error.message || 'Stream error occurred',
+            type: 'stream_error',
+            code: 500
+          } 
+        })}\n\n`);
         res.end();
       }
     });

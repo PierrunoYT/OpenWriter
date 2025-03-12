@@ -49,7 +49,12 @@ app.get('/api/health', (req, res) => {
     status: 'ok', 
     message: 'Server is running',
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
+    environment: process.env.NODE_ENV || 'development',
+    services: {
+      openrouter: process.env.OPENROUTER_API_KEY ? 'configured' : 'missing-api-key',
+      database: 'sqlite'
+    },
+    version: require('../package.json').version
   });
 });
 

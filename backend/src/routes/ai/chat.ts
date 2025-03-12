@@ -107,11 +107,24 @@ router.post('/', checkCreditsMiddleware, async (req: Request, res: Response): Pr
         res.status(400).json({ 
           error: { 
             message: 'Either messages or prompt is required',
-            code: 400
+            code: 400,
+            type: 'bad_request'
           } 
         });
         return;
       }
+    }
+    
+    // Validate model
+    if (!model) {
+      res.status(400).json({
+        error: {
+          message: 'Model is required',
+          code: 400,
+          type: 'bad_request'
+        }
+      });
+      return;
     }
     
     // Forward to generate endpoint with the same parameters

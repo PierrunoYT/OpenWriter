@@ -57,12 +57,36 @@ router.post('/completions', async (req: Request, res: Response) => {
     
     // Validate required fields
     if (!model) {
-      res.status(400).json({ error: 'Model is required', type: 'bad_request' });
+      res.status(400).json({ 
+        error: { 
+          message: 'Model is required',
+          code: 400,
+          type: 'bad_request'
+        }
+      });
       return;
     }
     
     if (!prompt) {
-      res.status(400).json({ error: 'Prompt is required', type: 'bad_request' });
+      res.status(400).json({ 
+        error: { 
+          message: 'Prompt is required',
+          code: 400,
+          type: 'bad_request'
+        }
+      });
+      return;
+    }
+    
+    // Validate model format
+    if (!model.includes('/')) {
+      res.status(400).json({
+        error: {
+          message: 'Invalid model ID format. Expected format: provider/model-name',
+          code: 400,
+          type: 'bad_request'
+        }
+      });
       return;
     }
     

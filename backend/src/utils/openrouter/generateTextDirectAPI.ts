@@ -130,31 +130,11 @@ interface MaxPrice {
   image?: number;
 }
 
-function prepareMessagesWithCaching(messages: Message[], model: string, enableCaching: boolean): Message[] {
-  if (!enableCaching || !model.startsWith('anthropic/')) {
-    return messages;
-  }
+// Import the shared function from generateText.ts to avoid duplication
+import { prepareMessagesWithCaching as prepareMessages } from './generateText';
 
-  return messages.map(message => {
-    if (typeof message.content === 'string') {
-      const content = message.content;
-      if (content.length > 1000) {
-        return {
-          ...message,
-          content: [
-            { type: 'text', text: content.substring(0, 100) },
-            { 
-              type: 'text', 
-              text: content.substring(100), 
-              cache_control: { type: 'ephemeral' } 
-            }
-          ]
-        };
-      }
-    }
-    return message;
-  });
-}
+// Re-export the function with the same name for backward compatibility
+const prepareMessagesWithCaching = prepareMessages;
 
 export async function generateTextDirectAPI(
   messages: Message[],
@@ -290,7 +270,13 @@ export async function generateTextDirectAPI(
       response.data.on('error', (error: Error) => {
         console.error('Stream error in direct API:', error);
         if (!res.writableEnded) {
-          res.write(`data: ${JSON.stringify({ error: 'Stream error occurred' })}\n\n`);
+          res.write(`data: ${JSON.stringify({ 
+            error: { 
+              message: error.message || 'Stream error occurred',
+              type: 'stream_error',
+              code: 500
+            } 
+          })}\n\n`);
           res.end();
         }
       });

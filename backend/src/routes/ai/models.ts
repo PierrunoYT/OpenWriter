@@ -202,6 +202,17 @@ router.get('/models/:modelId', async (req: Request, res: Response) => {
       return;
     }
     
+    // Validate model ID format
+    if (!modelId.includes('/')) {
+      res.status(400).json({
+        error: {
+          message: 'Invalid model ID format. Expected format: provider/model-name',
+          type: 'bad_request'
+        }
+      });
+      return;
+    }
+    
     // First try to get all models and find the specific one
     try {
       const response = await axios.get<OpenRouterResponse>(

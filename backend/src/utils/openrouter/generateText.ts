@@ -137,7 +137,8 @@ interface MaxPrice {
   image?: number;
 }
 
-function prepareMessagesWithCaching(messages: Message[], model: string, enableCaching: boolean): Message[] {
+// Export this function so it can be imported by other modules
+export function prepareMessagesWithCaching(messages: Message[], model: string, enableCaching: boolean): Message[] {
   if (!enableCaching || !model.startsWith('anthropic/')) {
     return messages;
   }
@@ -164,14 +165,20 @@ function prepareMessagesWithCaching(messages: Message[], model: string, enableCa
         ...message,
         content: message.content.map(part => {
           if (part.type === 'text' && typeof part.text === 'string' && part.text.length > 1000) {
-            return {
-              type: 'text',
-              text: part.text.substring(0, 100),
-              cache_control: { type: 'ephemeral' }
-            };
+            return [
+              { 
+                type: 'text', 
+                text: part.text.substring(0, 100) 
+              },
+              { 
+                type: 'text', 
+                text: part.text.substring(100), 
+                cache_control: { type: 'ephemeral' } 
+              }
+            ];
           }
           return part;
-        })
+        }).flat()
       };
     }
     return message;
