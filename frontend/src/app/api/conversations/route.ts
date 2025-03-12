@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import db from '../../../utils/db';
+import db from '@/utils/db';
 
 // Get all conversations
 export async function GET() {
   try {
-    const conversations = db.conversations.getAll();
+    const conversations = db.conversations.getAll;
     return NextResponse.json({ conversations });
   } catch (error) {
     console.error('Error fetching conversations:', error);
