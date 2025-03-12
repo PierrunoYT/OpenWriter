@@ -47,37 +47,189 @@ export default function EditorPage() {
       if (selectionStart !== undefined && selectionEnd !== undefined) {
         if (selectionStart !== selectionEnd) {
           const selectedText = editorContent.substring(selectionStart, selectionEnd);
-          setSelection(selectedText, { start: selectionStart, end: selectionEnd });
-          // Store in localStorage for persistence
-          localStorage.setItem('savedSelectedText', selectedText);
-          // Set flag to indicate we're using selected text
-          localStorage.setItem('useSelectedText', 'true');
+          
+          // Only update if the selection has changed to avoid unnecessary rerenders
+          const currentStoredText = localStorage.getItem('savedSelectedText');
+          const currentRange = localStorage.getItem('savedSelectionRange');
+          let currentRangeObj = null;
+          
+          try {
+            if (currentRange) {
+              currentRangeObj = JSON.parse(currentRange);
+            }
+          } catch (error) {
+            console.error('Error parsing stored selection range:', error);
+          }
+          
+          const selectionChanged = 
+            selectedText !== currentStoredText || 
+            !currentRangeObj || 
+            currentRangeObj.start !== selectionStart || 
+            currentRangeObj.end !== selectionEnd;
+          
+          if (selectionChanged) {
+            // Update the selection context
+            setSelection(selectedText, { start: selectionStart, end: selectionEnd }, 'editor');
+            
+            // Store in localStorage for persistence
+            localStorage.setItem('savedSelectedText', selectedText);
+            localStorage.setItem('savedSelectionRange', JSON.stringify({ start: selectionStart, end: selectionEnd }));
+            
+            // Set flag to indicate we're using selected text
+            localStorage.setItem('useSelectedText', 'true');
+            
+            // Dispatch a custom event to notify other components about the selection
+            const selectionEvent = new CustomEvent('editorTextSelected', {
+              detail: {
+                text: selectedText,
+                range: { start: selectionStart, end: selectionEnd }
+              }
+            });
+            document.dispatchEvent(selectionEvent);
+            
+            // Provide visual feedback that selection is active
+            showSelectionFeedback();
+          }
         } else {
-          clearSelection();
-          localStorage.removeItem('useSelectedText');
+          // Only clear if we had a selection before
+          if (localStorage.getItem('useSelectedText') === 'true') {
+            clearSelection();
+            localStorage.removeItem('useSelectedText');
+            localStorage.removeItem('savedSelectionRange');
+            
+            // Dispatch event for selection cleared
+            const clearEvent = new CustomEvent('editorSelectionCleared');
+            document.dispatchEvent(clearEvent);
+          }
         }
       }
     } catch (error) {
       console.error('Error handling text selection:', error);
       clearSelection();
       localStorage.removeItem('useSelectedText');
+      localStorage.removeItem('savedSelectionRange');
+    }
+  };
+  
+  // Function to provide visual feedback when selection changes
+  const showSelectionFeedback = () => {
+    // Add a temporary visual indicator
+    const feedbackElement = document.getElementById('selection-feedback');
+    
+    if (!feedbackElement) {
+      const newFeedback = document.createElement('div');
+      newFeedback.id = 'selection-feedback';
+      newFeedback.textContent = 'Text selection active';
+      newFeedback.className = 'fixed top-4 right-4 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 animate-fade-in-out';
+      
+      // Add the animation class
+      const style = document.createElement('style');
+      style.textContent = `
+        @keyframes fadeInOut {
+          0% { opacity: 0; transform: translateY(10px); }
+          10% { opacity: 1; transform: translateY(0); }
+          90% { opacity: 1; transform: translateY(0); }
+          100% { opacity: 0; transform: translateY(-10px); }
+        }
+        .animate-fade-in-out {
+          animation: fadeInOut 2s forwards;
+        }
+      `;
+      document.head.appendChild(style);
+      
+      document.body.appendChild(newFeedback);
+      
+      // Remove after animation completes
+      setTimeout(() => {
+        if (newFeedback.parentNode) {
+          newFeedback.parentNode.removeChild(newFeedback);
+        }
+      }, 2000);
     }
   };
   
   const replaceSelectedText = (newText: string = aiResponse) => {
-    if (!selectionRange) return;
-    
-    const before = editorContent.substring(0, selectionRange.start);
-    const after = editorContent.substring(selectionRange.end);
-    const newContent = before + newText + after;
-    
-    setEditorContent(newContent);
-    
-    // Focus the editor and set cursor position after the inserted text
-    if (editorRef.current) {
-      editorRef.current.focus();
-      const newCursorPosition = selectionRange.start + newText.length;
-      editorRef.current.setSelectionRange(newCursorPosition, newCursorPosition);
+    try {
+      // First try to get the range from the context
+      let range = selectionRange;
+      
+      // If not available, try to get it from localStorage
+      if (!range && typeof window !== 'undefined') {
+        const savedRange = localStorage.getItem('savedSelectionRange');
+        if (savedRange) {
+          try {
+            range = JSON.parse(savedRange);
+          } catch (error) {
+            console.error('Error parsing saved selection range:', error);
+          }
+        }
+      }
+      
+      // If we still don't have a valid range, notify the user and return
+      if (!range) {
+        console.error('No valid selection range found for replacement');
+        const errorElement = document.createElement('div');
+        errorElement.textContent = 'Cannot replace: selection range not found';
+        errorElement.className = 'fixed bottom-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+        document.body.appendChild(errorElement);
+        setTimeout(() => {
+          document.body.removeChild(errorElement);
+        }, 3000);
+        return;
+      }
+      
+      // Validate range is within the current content
+      if (range.start < 0 || range.end > editorContent.length || range.start > range.end) {
+        console.error('Invalid selection range:', range);
+        const errorElement = document.createElement('div');
+        errorElement.textContent = 'Cannot replace: selection range is invalid';
+        errorElement.className = 'fixed bottom-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+        document.body.appendChild(errorElement);
+        setTimeout(() => {
+          document.body.removeChild(errorElement);
+        }, 3000);
+        return;
+      }
+      
+      // Perform the replacement
+      const before = editorContent.substring(0, range.start);
+      const after = editorContent.substring(range.end);
+      const newContent = before + newText + after;
+      
+      setEditorContent(newContent);
+      
+      // Focus the editor and set cursor position after the inserted text
+      if (editorRef.current) {
+        editorRef.current.focus();
+        const newCursorPosition = range.start + newText.length;
+        editorRef.current.setSelectionRange(newCursorPosition, newCursorPosition);
+      }
+      
+      // Show success feedback
+      const successElement = document.createElement('div');
+      successElement.textContent = 'Text replaced successfully';
+      successElement.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+      document.body.appendChild(successElement);
+      setTimeout(() => {
+        document.body.removeChild(successElement);
+      }, 2000);
+      
+      // Clear the selection after replacement
+      clearSelection();
+      localStorage.removeItem('useSelectedText');
+      localStorage.removeItem('savedSelectionRange');
+      
+    } catch (error) {
+      console.error('Error replacing selected text:', error);
+      
+      // Show error feedback
+      const errorElement = document.createElement('div');
+      errorElement.textContent = 'Error replacing selected text';
+      errorElement.className = 'fixed bottom-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+      document.body.appendChild(errorElement);
+      setTimeout(() => {
+        document.body.removeChild(errorElement);
+      }, 3000);
     }
   };
   const [isClient, setIsClient] = useState(false);
@@ -180,11 +332,14 @@ export default function EditorPage() {
   };
 
   // Handle sending a chat message
-  const handleChatSend = async (): Promise<void> => {
-    if (!chatInput.trim()) return;
+  const handleChatSend = async (processedMessage?: string): Promise<void> => {
+    // Use either the processed message from the Chat component or the raw chat input
+    const messageToSend = processedMessage || chatInput;
+    
+    if (!messageToSend.trim()) return;
     
     // Add user message to chat
-    const userMessage: ChatMessage = { role: 'user', content: chatInput };
+    const userMessage: ChatMessage = { role: 'user', content: messageToSend };
     const updatedMessages = [...chatMessages, userMessage];
     setChatMessages(updatedMessages);
     setChatInput(''); // Clear input
@@ -872,7 +1027,7 @@ export default function EditorPage() {
     return () => document.removeEventListener('click', handleDocumentClick);
   }, []);
 
-  // Add click handler to prevent text selection from being cleared
+  // This function is used in the div's onClick handler to prevent selection clearing
   const handleAppClick = (e: React.MouseEvent) => {
     // Only prevent default if we have an active selection
     if (localStorage.getItem('useSelectedText') === 'true') {
@@ -909,6 +1064,7 @@ export default function EditorPage() {
   return (
     <SelectionProvider>
       <div 
+        onClick={handleAppClick}
         className={`min-h-screen h-screen overflow-hidden flex flex-col bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 text-slate-800 dark:text-slate-100 ${theme === 'dark' ? 'theme-dark' : 'theme-light'}`}
         data-theme={theme}>
       <Header 
@@ -965,10 +1121,23 @@ export default function EditorPage() {
             {/* Left side - Editor area */}
             <div className="w-1/2 overflow-hidden h-full flex flex-col mr-4">
               <div className="flex-1 overflow-hidden bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
-                <div className="p-4 h-full">
+                <div className="p-4 h-full relative">
+                  {/* Selection active indicator */}
+                  {isSelectionActive && (
+                    <div className="absolute top-2 right-2 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded-md flex items-center z-10 shadow-sm text-xs border border-blue-200 dark:border-blue-800">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
+                        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                        <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                      </svg>
+                      Text Selection Active
+                    </div>
+                  )}
+                  
                   <textarea
                     ref={editorRef}
-                    className="w-full h-full p-3 bg-transparent focus:outline-none resize-none"
+                    className={`w-full h-full p-3 bg-transparent focus:outline-none resize-none ${
+                      isSelectionActive ? 'border border-blue-300 dark:border-blue-700 rounded-md' : ''
+                    }`}
                     placeholder="Start writing here or paste your text to analyze, edit, or improve..."
                     value={editorContent}
                     onChange={(e) => setEditorContent(e.target.value)}
@@ -1013,7 +1182,7 @@ export default function EditorPage() {
                   API_BASE_URL={API_BASE_URL}
                   handleChatSend={handleChatSend}
                   handleGenerateContent={handleGenerateContent}
-                  replaceSelectedText={replaceSelectedText}
+                  replaceSelectedText={(text) => replaceSelectedText(text)}
                 />
               </div>
             </div>
