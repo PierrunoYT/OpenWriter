@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useTheme } from '@/app/providers';
+import { useTheme } from '../../../utils/ThemeContext';
 
 interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
