@@ -26,6 +26,8 @@ export default function Chat({
   API_BASE_URL,
   handleChatSend,
   handleGenerateContent,
+  selectedText,
+  replaceSelectedText,
 }: {
   content: string;
   setContent: (content: string) => void;
@@ -44,6 +46,8 @@ export default function Chat({
   API_BASE_URL: string;
   handleChatSend: () => Promise<void>;
   handleGenerateContent: () => Promise<void>;
+  selectedText: string;
+  replaceSelectedText: () => void;
 }) {
   const { theme } = useTheme();
 
@@ -143,6 +147,38 @@ export default function Chat({
       </div>
 
       <div className="border-t border-slate-200 dark:border-slate-700 p-3">
+        <div className="flex items-center gap-2 mb-2">
+          {selectedText && (
+            <button
+              onClick={() => {
+                setContent(`Analyze this selected text: ${selectedText.substring(0, 50)}${selectedText.length > 50 ? '...' : ''}`);
+              }}
+              className="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded flex items-center gap-1 hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
+              title="Reference the selected text in your editor"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+              </svg>
+              Reference Selection
+            </button>
+          )}
+          
+          {aiResponse && (
+            <button
+              onClick={replaceSelectedText}
+              className="text-xs px-2 py-1 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded flex items-center gap-1 hover:bg-green-200 dark:hover:bg-green-800 transition-colors"
+              title="Replace selected text with AI response"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                <polyline points="7 3 7 8 15 8"></polyline>
+              </svg>
+              Replace Selection
+            </button>
+          )}
+        </div>
         
         <div className="flex items-center relative">
           <input

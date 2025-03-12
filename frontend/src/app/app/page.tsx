@@ -32,6 +32,8 @@ export default function EditorPage() {
   const [editorContent, setEditorContent] = useState<string>('');
   const [chatInput, setChatInput] = useState<string>('');
   const [aiResponse, setAiResponse] = useState<string>('');
+  const [selectedText, setSelectedText] = useState<string>('');
+  const [selectionRange, setSelectionRange] = useState<{start: number, end: number} | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [selectedModel, setSelectedModel] = useState<string>('anthropic/claude-3.7-sonnet');
   const [enableCaching, setEnableCaching] = useState<boolean>(true);
@@ -184,10 +186,14 @@ export default function EditorPage() {
       setChatMessages([...updatedMessages, thinkingMessage]);
       
       try {
-        // Always include editor content in the system prompt for context
+        // Include selected text or full editor content in the system prompt for context
         const messagesForAPI = [
-          { role: 'system', content: systemPrompt + (editorContent.trim() ? 
-            "\n\nThe user has the following text in their editor:\n\n" + editorContent : "") 
+          { role: 'system', content: systemPrompt + 
+            (selectedText.trim() ? 
+              "\n\nThe user has selected the following text in their editor:\n\n" + selectedText : 
+              editorContent.trim() ? 
+                "\n\nThe user has the following text in their editor:\n\n" + editorContent : 
+                "")
           },
           ...updatedMessages // Include conversation history
         ];
@@ -433,6 +439,17 @@ export default function EditorPage() {
   // Removing it since it's unused
   // If needed in the future, it can be reimplemented
 
+
+  // Function to replace selected text with AI response
+  const replaceSelectedText = () => {
+    if (selectionRange && aiResponse) {
+      const newContent = 
+        editorContent.substring(0, selectionRange.start) + 
+        aiResponse + 
+        editorContent.substring(selectionRange.end);
+      setEditorContent(newContent);
+    }
+  };
 
   const handleGenerateContent = async (): Promise<void> => {
     setIsLoading(true);
@@ -786,6 +803,15 @@ export default function EditorPage() {
                     placeholder="Start writing here..."
                     value={editorContent}
                     onChange={(e) => setEditorContent(e.target.value)}
+                    onSelect={(e) => {
+                      const target = e.target as HTMLTextAreaElement;
+                      const selectedText = editorContent.substring(target.selectionStart, target.selectionEnd);
+                      setSelectedText(selectedText);
+                      setSelectionRange({
+                        start: target.selectionStart,
+                        end: target.selectionEnd
+                      });
+                    }}
                   ></textarea>
                 </div>
               </div>
@@ -812,6 +838,8 @@ export default function EditorPage() {
                   API_BASE_URL={API_BASE_URL}
                   handleChatSend={handleChatSend}
                   handleGenerateContent={handleGenerateContent}
+                  selectedText={selectedText}
+                  replaceSelectedText={replaceSelectedText}
                 />
               </div>
             </div>
