@@ -131,23 +131,7 @@ export async function streamTextCompletion(
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
-    
-    // Add CSP headers to allow necessary resources
-    res.setHeader(
-      'Content-Security-Policy',
-      [
-        "default-src 'self'",
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-        "style-src 'self' 'unsafe-inline'",
-        "img-src 'self' data: blob:",
-        "font-src 'self'",
-        "connect-src 'self' https://openrouter.ai",
-        "frame-src 'self'",
-        "media-src 'self'",
-        "object-src 'none'",
-        "base-uri 'self'"
-      ].join('; ')
-    );
+    // CSP headers are now handled by the cspMiddleware
 
     const response = await axios.post(
       `${OPENROUTER_API_URL}/completions`,

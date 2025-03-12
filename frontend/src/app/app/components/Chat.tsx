@@ -59,15 +59,16 @@ export default function Chat({
     const saved = localStorage.getItem('savedSelectedText');
     setSavedSelection(saved);
     
-    // Set up an interval to check for changes to the saved selection
-    const interval = setInterval(() => {
-      const currentSaved = localStorage.getItem('savedSelectedText');
-      if (currentSaved !== savedSelection) {
-        setSavedSelection(currentSaved);
+    // Listen for storage events (more efficient than polling)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'savedSelectedText') {
+        setSavedSelection(e.newValue);
       }
-    }, 1000);
+    };
     
-    return () => clearInterval(interval);
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   return (

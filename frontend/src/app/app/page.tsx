@@ -56,8 +56,6 @@ export default function EditorPage() {
   const [selectedPromptId, setSelectedPromptId] = useState<string>('default');
   const [showSystemPrompt, setShowSystemPrompt] = useState<boolean>(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-  // Removed unused state variables: copyState, setCopyState
-  
   // Conversation management
   interface Conversation {
     id: number;
@@ -70,10 +68,6 @@ export default function EditorPage() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [currentConversation, setCurrentConversation] = useState<number | null>(null);
   const [showSidebar, setShowSidebar] = useState<boolean>(true);
-  // State is used in createConversation but not directly in JSX
-  const [, setNewConversationTitle] = useState<string>('');
-  // State is used in createConversation but not directly in JSX
-  const [, setIsCreatingConversation] = useState<boolean>(false);
 
   // Fetch all conversations
   const fetchConversations = async (): Promise<void> => {
@@ -183,10 +177,17 @@ export default function EditorPage() {
 
       // Save user message to the conversation
       console.log('About to save user message, conversation ID:', conversationId);
-      if (conversationId) {
-        await saveMessage('user', userMessage.content);
-      } else {
+      if (!conversationId) {
         console.error('Failed to establish conversation ID before saving message');
+        setIsLoading(false);
+        return;
+      }
+      
+      try {
+        await saveMessage('user', userMessage.content);
+      } catch (error) {
+        console.error('Error saving user message:', error);
+        // Continue with the conversation even if saving fails
       }
 
       // Add a temporary "thinking" message that will be replaced
@@ -260,6 +261,19 @@ export default function EditorPage() {
           
           if (errorDetails?.reasons && errorDetails.reasons.length > 0) {
             errorMessage += ` Reason: ${errorDetails.reasons[0]}`;
+          }
+          
+          if (errorDetails?.provider) {
+            errorMessage += ` (Provider: ${errorDetails.provider})`;
+          }
+          
+          // Add recovery suggestion based on error type
+          if (response.status === 429) {
+            errorMessage += " Please wait a moment and try again as rate limits may apply.";
+          } else if (response.status === 402) {
+            errorMessage += " You may need to check your account credits.";
+          } else if (response.status >= 500) {
+            errorMessage += " The AI service may be experiencing issues. Please try again later.";
           }
           
           // Replace the "thinking" message with an error message
@@ -346,7 +360,6 @@ export default function EditorPage() {
   // Create a new conversation
   const createConversation = async (title: string): Promise<number | null> => {
     try {
-      setIsCreatingConversation(true);
       console.log(`Creating new conversation with title: ${title}`);
       
       const response = await fetch('/api/conversations', {
@@ -377,13 +390,9 @@ export default function EditorPage() {
       // Refresh conversations list
       await fetchConversations();
       
-      setNewConversationTitle('');
-      setIsCreatingConversation(false);
-      
       return newConversationId;
     } catch (error) {
       console.error('Error creating conversation:', error);
-      setIsCreatingConversation(false);
       throw error;
     }
   };
@@ -597,8 +606,11 @@ export default function EditorPage() {
     }
   };
 
-  // Direct API URL to OpenRouter
-  const API_BASE_URL = 'https://openrouter.ai/api/v1';
+  // Import API configuration
+  import { OPENROUTER_API_URL } from '@/config/api';
+  
+  // Use the centralized API URL
+  const API_BASE_URL = OPENROUTER_API_URL;
   
   // Load conversations and restore system prompt on initial render
   useEffect(() => {
@@ -625,6 +637,48 @@ export default function EditorPage() {
   useEffect(() => {
     // Set loading state
     setLoadingModels(true);
+    
+    // Add timeout to prevent hanging on slow API
+    const timeoutId = setTimeout(() => {
+      if (loadingModels) {
+        console.log('Model loading timed out, using fallback models');
+        setLoadingModels(false);
+        
+        // Use fallback models
+        const fallbackModels = [
+          { 
+            id: 'anthropic/claude-3.7-sonnet', 
+            name: 'Claude 3.7 Sonnet', 
+            description: 'Latest Claude model with excellent capabilities',
+            context_length: 200000,
+            pricing: { prompt: 3.00, completion: 15.00 },
+            features: ['multimodal'],
+            supportsStructured: false
+          },
+          { 
+            id: 'anthropic/claude-3-haiku', 
+            name: 'Claude 3 Haiku', 
+            description: 'Fast and efficient Claude model',
+            context_length: 200000,
+            pricing: { prompt: 0.25, completion: 1.25 },
+            features: ['multimodal'],
+            supportsStructured: false
+          },
+          { 
+            id: 'openai/gpt-4o', 
+            name: 'GPT-4o', 
+            description: 'Latest OpenAI model with excellent capabilities',
+            context_length: 128000,
+            pricing: { prompt: 5.00, completion: 15.00 },
+            features: ['multimodal', 'json_object'],
+            supportsStructured: true
+          }
+        ];
+        
+        setModels(fallbackModels);
+        setSelectedModel('anthropic/claude-3.7-sonnet');
+      }
+    }, 5000); // 5 second timeout
     
     // Fetch models from OpenRouter
     const fetchModels = async () => {
@@ -722,10 +776,14 @@ export default function EditorPage() {
         setSelectedModel('anthropic/claude-3.7-sonnet');
       } finally {
         setLoadingModels(false);
+        clearTimeout(timeoutId); // Clear the timeout if models loaded successfully
       }
     };
     
     fetchModels();
+    
+    // Clean up timeout on unmount
+    return () => clearTimeout(timeoutId);
   }, []);
   
   // No fallback models
