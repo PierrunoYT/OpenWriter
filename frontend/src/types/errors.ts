@@ -9,5 +9,5 @@ export interface ErrorWithDetails {
   reasons?: string[];
   flagged_input?: string;
   provider?: string;
-  raw_error?: any;
+  raw_error?: unknown;
 }
