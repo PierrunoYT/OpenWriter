@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import db from '@/utils/db';
+import db from '@/utils/serverDb';
 
 // Get all conversations
 export async function GET() {
