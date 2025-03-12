@@ -1,6 +1,7 @@
 import axios from 'axios';
 import dotenv from 'dotenv';
 import { OpenAI } from 'openai';
+import { applyCommonRequestParameters, createStandardizedError } from './utils';
 
 dotenv.config();
 
@@ -150,9 +151,9 @@ export function prepareMessagesWithCaching(messages: Message[], model: string, e
         return {
           ...message,
           content: [
-            { type: 'text', text: content.substring(0, 100) },
+            { type: 'text' as const, text: content.substring(0, 100) },
             { 
-              type: 'text', 
+              type: 'text' as const, 
               text: content.substring(100), 
               cache_control: { type: 'ephemeral' } 
             }
@@ -160,22 +161,21 @@ export function prepareMessagesWithCaching(messages: Message[], model: string, e
         };
       }
     } else if (Array.isArray(message.content)) {
-      // Handle array content (multimodal messages)
       return {
         ...message,
         content: message.content.map(part => {
           if (part.type === 'text' && typeof part.text === 'string' && part.text.length > 1000) {
             return [
               { 
-                type: 'text', 
+                type: 'text' as const, 
                 text: part.text.substring(0, 100) 
               },
               { 
-                type: 'text', 
+                type: 'text' as const, 
                 text: part.text.substring(100), 
                 cache_control: { type: 'ephemeral' } 
               }
-            ];
+            ] as TextContent[];
           }
           return part;
         }).flat()
@@ -237,7 +237,6 @@ export async function generateText(
     };
     
     // Apply common parameters using the shared utility function
-    import { applyCommonRequestParameters } from './utils';
     applyCommonRequestParameters(requestParams, options);
     
     // Handle abort signal if provided
@@ -265,9 +264,6 @@ export async function generateText(
     return completion;
   } catch (error: unknown) {
     console.error('Error calling OpenRouter API via OpenAI SDK:', error);
-    
-    // Use the standardized error handling utility
-    import { createStandardizedError } from './utils';
     throw createStandardizedError(error);
   }
 }
