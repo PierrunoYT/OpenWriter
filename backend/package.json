@@ -20,6 +20,7 @@
     "@types/express": "^5.0.0",
     "@types/node": "^22.13.9",
     "@types/sqlite3": "^3.1.11",
+    "@types/uuid": "^9.0.8",
     "axios": "^1.8.2",
     "better-sqlite3": "^11.8.1",
     "cors": "^2.8.5",
@@ -28,6 +29,7 @@
     "openai": "^4.86.2",
     "sqlite3": "^5.1.7",
     "ts-node": "^10.9.2",
-    "typescript": "^5.8.2"
+    "typescript": "^5.8.2",
+    "uuid": "^9.0.1"
   }
 }
