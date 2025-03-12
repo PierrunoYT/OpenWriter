@@ -32,8 +32,8 @@ export default function Chat({
   handleGenerateContent: () => Promise<void>;
   replaceSelectedText: (text?: string) => void;
 }) {
-  // We use theme for theme-related class names
-  const { theme: _ } = useTheme();
+  // We use the useTheme hook for theme-related functionality
+  useTheme();
   const [savedSelection, setSavedSelection] = useState<string | null>(null);
   const [isClient, setIsClient] = useState(false);
   const { isSelectionActive, selectedText, clearSelection, selectionTimestamp, toggleSelectionUse } = useSelection();
