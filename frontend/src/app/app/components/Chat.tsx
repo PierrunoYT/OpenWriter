@@ -144,13 +144,14 @@ export default function Chat({
 
       <div className="border-t border-slate-200 dark:border-slate-700 p-3">
         <div className="flex items-center relative">
-          <textarea
-            className="flex-1 p-3 pr-12 border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 max-h-32 resize-none"
-            placeholder="Type your message here..."
+          <input
+            type="text"
+            className="flex-1 p-3 pr-12 border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+            placeholder="Ask about your text..."
             value={content}
             onChange={(e) => setContent(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
+              if (e.key === 'Enter') {
                 e.preventDefault();
                 if (!isLoading && content.trim()) {
                   if (chatMessages.length > 0) {
@@ -161,7 +162,6 @@ export default function Chat({
                 }
               }
             }}
-            rows={1}
           />
           <button
             onClick={chatMessages.length > 0 ? handleChatSend : handleGenerateContent}
