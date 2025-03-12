@@ -141,13 +141,36 @@ export default function Chat({
             <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="mb-4 opacity-50">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
             </svg>
-            <p className="text-center font-light mb-2">I'm here to assist you with your writing.</p>
-            <ul className="text-center text-xs space-y-1 max-w-xs">
-              <li>• Type in the editor on the left, then ask me about your text</li>
-              <li>• Select text to analyze specific sections</li>
-              <li>• Ask me to improve, summarize, or expand your writing</li>
-              <li>• Use the "Replace Selection" button to update your text</li>
+            <p className="text-center font-medium mb-3 text-slate-600 dark:text-slate-300">Your AI Writing Assistant</p>
+            <div className="text-center mb-4 max-w-sm">
+              <p className="mb-2">I can help you write, edit, analyze, and improve your text. Here's how to use me:</p>
+            </div>
+            <ul className="text-center text-sm space-y-2 max-w-xs mb-2">
+              <li className="flex items-center gap-2 justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 11 12 14 22 4"></polyline>
+                  <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                </svg>
+                Write or paste text in the editor
+              </li>
+              <li className="flex items-center gap-2 justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 11 12 14 22 4"></polyline>
+                  <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                </svg>
+                Select text for specific analysis
+              </li>
+              <li className="flex items-center gap-2 justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 11 12 14 22 4"></polyline>
+                  <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                </svg>
+                Ask me to improve, summarize, or expand
+              </li>
             </ul>
+            <p className="text-center text-xs mt-4 text-slate-500 dark:text-slate-400 italic">
+              Type a question below to get started
+            </p>
           </div>
         )}
       </div>
