@@ -49,7 +49,7 @@ export function SystemPrompt({
       </div>
       
       <textarea
-        className="w-full p-3 bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent text-sm"
+        className="w-full p-3 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent text-sm text-slate-800 dark:text-slate-200"
         placeholder="Enter a custom system prompt here..."
         value={systemPrompt}
         onChange={(e) => {
