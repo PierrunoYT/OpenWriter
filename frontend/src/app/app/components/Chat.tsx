@@ -243,7 +243,7 @@ export default function Chat({
             </svg>
             <p className="text-center font-medium mb-3 text-slate-600 dark:text-slate-300">Your AI Writing Assistant</p>
             <div className="text-center mb-4 max-w-sm">
-              <p className="mb-2">I can help you write, edit, analyze, and improve your text. Here's how to use me:</p>
+              <p className="mb-2">I can help you write, edit, analyze, and improve your text. Here&apos;s how to use me:</p>
             </div>
             <ul className="text-center text-sm space-y-2 max-w-xs mb-2">
               <li className="flex items-center gap-2 justify-center">
