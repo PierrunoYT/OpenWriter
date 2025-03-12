@@ -1,5 +1,6 @@
 import axios from 'axios';
 import dotenv from 'dotenv';
+import { applyCommonRequestParameters } from './utils';
 
 dotenv.config();
 
@@ -158,7 +159,6 @@ export async function generateTextDirectAPI(
     };
     
     // Apply common parameters using the shared utility function
-    import { applyCommonRequestParameters } from './utils';
     applyCommonRequestParameters(requestBody, options);
     
     if (isStreaming && res) {
