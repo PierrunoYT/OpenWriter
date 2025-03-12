@@ -33,6 +33,11 @@ export const SelectionProvider = ({ children }: { children: React.ReactNode }) =
     setSelectedText('');
     setSelectionRange(null);
     setIsSelectionActive(false);
+    // Also clear localStorage when selection is cleared
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('useSelectedText');
+      // Don't remove savedSelectedText here to allow for recovery
+    }
   };
 
   return (

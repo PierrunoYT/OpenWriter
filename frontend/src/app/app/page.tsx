@@ -50,13 +50,17 @@ export default function EditorPage() {
           setSelection(selectedText, { start: selectionStart, end: selectionEnd });
           // Store in localStorage for persistence
           localStorage.setItem('savedSelectedText', selectedText);
+          // Set flag to indicate we're using selected text
+          localStorage.setItem('useSelectedText', 'true');
         } else {
           clearSelection();
+          localStorage.removeItem('useSelectedText');
         }
       }
     } catch (error) {
       console.error('Error handling text selection:', error);
       clearSelection();
+      localStorage.removeItem('useSelectedText');
     }
   };
   
@@ -876,6 +880,31 @@ export default function EditorPage() {
       e.stopPropagation();
     }
   };
+
+  // Ensure selection persists when switching between editor and chat
+  useEffect(() => {
+    // Check for saved selection on component mount and focus changes
+    const savedSelectedText = localStorage.getItem('savedSelectedText');
+    const useSelectedText = localStorage.getItem('useSelectedText') === 'true';
+    
+    if (savedSelectedText && useSelectedText) {
+      // Restore the selection state from localStorage
+      setSelection(savedSelectedText, null);
+    }
+    
+    // Listen for focus events to maintain selection state
+    const handleFocusChange = () => {
+      const savedText = localStorage.getItem('savedSelectedText');
+      const useSelected = localStorage.getItem('useSelectedText') === 'true';
+      
+      if (savedText && useSelected) {
+        setSelection(savedText, null);
+      }
+    };
+    
+    window.addEventListener('focus', handleFocusChange, true);
+    return () => window.removeEventListener('focus', handleFocusChange, true);
+  }, [setSelection]);
 
   return (
     <SelectionProvider>
