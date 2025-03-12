@@ -519,16 +519,7 @@ export default function EditorPage() {
   // If needed in the future, it can be reimplemented
 
 
-  // Function to replace selected text with AI response
-  const replaceSelectedText = () => {
-    if (selectionRange && aiResponse) {
-      const newContent = 
-        editorContent.substring(0, selectionRange.start) + 
-        aiResponse + 
-        editorContent.substring(selectionRange.end);
-      setEditorContent(newContent);
-    }
-  };
+  // This function is already defined above, so we can remove this duplicate
 
   const handleGenerateContent = async (): Promise<void> => {
     setIsLoading(true);
