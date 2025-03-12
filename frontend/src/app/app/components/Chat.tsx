@@ -122,7 +122,7 @@ export default function Chat({
         setChatMessages([...chatMessages, { role: 'user', content: finalContent }]);
         
         // Add the assistant "thinking" message
-        setChatMessages((prev: ChatMessage[]) => [...prev, { role: 'assistant', content: 'Thinking...' }]);
+        setChatMessages([...chatMessages, { role: 'user', content: finalContent }, { role: 'assistant', content: 'Thinking...' }]);
         
         // Call the parent's handleChatSend function with our processed message
         handleChatSend(finalContent);
