@@ -39,7 +39,7 @@ export default function Chat({
   setChatMessages: (messages: ChatMessage[]) => void;
   currentConversation: number | null;
   setCurrentConversation: (id: number | null) => void;
-  saveMessage: (role: string, content: string) => Promise<void>;
+  saveMessage: (role: string, content: string) => Promise<unknown>;
   createConversation: (title: string) => Promise<number | null>;
   API_BASE_URL: string;
   handleChatSend: () => Promise<void>;

@@ -383,7 +383,7 @@ export default function EditorPage() {
   };
   
   // Save a message to the current conversation
-  const saveMessage = async (role: string, content: string): Promise<any> => {
+  const saveMessage = async (role: string, content: string): Promise<unknown> => {
     if (!currentConversation) {
       console.error('Attempted to save message without active conversation');
       return null;
