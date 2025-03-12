@@ -29,7 +29,8 @@ interface ChatMessage {
 
 export default function EditorPage() {
   const { theme } = useTheme();
-  const [content, setContent] = useState<string>('');
+  const [editorContent, setEditorContent] = useState<string>('');
+  const [chatInput, setChatInput] = useState<string>('');
   const [aiResponse, setAiResponse] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [selectedModel, setSelectedModel] = useState<string>('anthropic/claude-3.7-sonnet');
@@ -127,13 +128,13 @@ export default function EditorPage() {
 
   // Handle sending a chat message
   const handleChatSend = async (): Promise<void> => {
-    if (!content.trim()) return;
+    if (!chatInput.trim()) return;
     
     // Add user message to chat
-    const userMessage: ChatMessage = { role: 'user', content };
+    const userMessage: ChatMessage = { role: 'user', content: chatInput };
     const updatedMessages = [...chatMessages, userMessage];
     setChatMessages(updatedMessages);
-    setContent(''); // Clear input
+    setChatInput(''); // Clear input
     setIsLoading(true);
 
     try {
@@ -185,8 +186,8 @@ export default function EditorPage() {
       try {
         // Always include editor content in the system prompt for context
         const messagesForAPI = [
-          { role: 'system', content: systemPrompt + (content.trim() ? 
-            "\n\nThe user has the following text in their editor:\n\n" + content : "") 
+          { role: 'system', content: systemPrompt + (editorContent.trim() ? 
+            "\n\nThe user has the following text in their editor:\n\n" + editorContent : "") 
           },
           ...updatedMessages // Include conversation history
         ];
@@ -452,7 +453,7 @@ export default function EditorPage() {
                 ? `${systemPrompt} Format your response as ${outputFormat}.` 
                 : systemPrompt
             },
-            { role: 'user', content }
+            { role: 'user', content: chatInput.trim() ? chatInput : editorContent }
           ],
           model: selectedModel,
           temperature: 0.7,
@@ -764,7 +765,7 @@ export default function EditorPage() {
               setOutputFormat={setOutputFormat}
               handleGenerateContent={handleGenerateContent}
               isLoading={isLoading}
-              content={content}
+              content={editorContent}
               outputFormats={outputFormats}
               systemPrompt={systemPrompt}
               setSystemPrompt={setSystemPrompt}
@@ -783,8 +784,8 @@ export default function EditorPage() {
                   <textarea
                     className="w-full h-full p-3 bg-transparent focus:outline-none resize-none"
                     placeholder="Start writing here..."
-                    value={content}
-                    onChange={(e) => setContent(e.target.value)}
+                    value={editorContent}
+                    onChange={(e) => setEditorContent(e.target.value)}
                   ></textarea>
                 </div>
               </div>
@@ -794,8 +795,8 @@ export default function EditorPage() {
             <div className="w-1/2 overflow-hidden h-full">
               <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm overflow-hidden border border-slate-200 dark:border-slate-700 h-full">
                 <Chat
-                  content={content}
-                  setContent={setContent}
+                  content={chatInput}
+                  setContent={setChatInput}
                   aiResponse={aiResponse}
                   setAiResponse={setAiResponse}
                   isLoading={isLoading}
