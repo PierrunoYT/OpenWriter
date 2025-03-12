@@ -58,6 +58,16 @@ export default function Chat({
     setIsClient(true);
     const saved = localStorage.getItem('savedSelectedText');
     setSavedSelection(saved);
+    
+    // Set up an interval to check for changes to the saved selection
+    const interval = setInterval(() => {
+      const currentSaved = localStorage.getItem('savedSelectedText');
+      if (currentSaved !== savedSelection) {
+        setSavedSelection(currentSaved);
+      }
+    }, 1000);
+    
+    return () => clearInterval(interval);
   }, []);
 
   return (

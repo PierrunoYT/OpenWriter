@@ -50,7 +50,7 @@ export default function Header({ showSidebar, setShowSidebar, loadingModels }: H
       {/* Right side - Theme toggle */}
       <div className="flex items-center gap-3">
         <a 
-          href="https://github.com/yourusername/openwriter" 
+          href="https://github.com/openwriter-ai/openwriter" 
           target="_blank" 
           rel="noopener noreferrer"
           className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"

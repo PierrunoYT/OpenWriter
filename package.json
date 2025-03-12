@@ -25,7 +25,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/openwriter.git"
+    "url": "https://github.com/openwriter-ai/openwriter.git"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

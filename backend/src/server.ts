@@ -6,6 +6,7 @@ import { cspMiddleware } from './middleware/cspMiddleware';
 // Import routes
 import indexRoutes from './routes/index';
 import aiRoutes from './routes/ai';
+import conversationsRoutes from './routes/conversations';
 
 // Load environment variables
 dotenv.config();
@@ -22,6 +23,7 @@ app.use(cspMiddleware);
 // Routes
 app.use('/', indexRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/conversations', conversationsRoutes);
 
 // Start server
 app.listen(PORT, () => {
