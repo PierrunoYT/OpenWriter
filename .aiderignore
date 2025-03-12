@@ -1,0 +1,48 @@
+# Node modules
+node_modules/
+
+# Build directories
+.next/
+dist/
+build/
+
+# Environment files
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Log files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor directories and files
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Package files
+package-lock.json
+yarn.lock
+
+# Common large files
+*.min.js
+*.min.css
+
+# Test coverage
+coverage/
+
+# Temporary files
+*.tmp
+*.temp

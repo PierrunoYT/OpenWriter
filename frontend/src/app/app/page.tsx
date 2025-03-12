@@ -143,12 +143,27 @@ export default function EditorPage() {
       if (!conversationId) {
         console.log('No active conversation, creating a new one');
         const defaultTitle = userMessage.content.substring(0, 30) + (userMessage.content.length > 30 ? '...' : '');
-        conversationId = await createConversation(defaultTitle);
-        console.log('Created new conversation with ID:', conversationId);
-        if (conversationId) {
-          setCurrentConversation(conversationId);
-          // Refresh the conversations list to show the new one
-          await fetchConversations();
+        try {
+          conversationId = await createConversation(defaultTitle);
+          console.log('Created new conversation with ID:', conversationId);
+          if (conversationId) {
+            setCurrentConversation(conversationId);
+            // Refresh the conversations list to show the new one
+            await fetchConversations();
+          } else {
+            // Handle the case where createConversation returns null
+            throw new Error('Failed to create conversation: returned null ID');
+          }
+        } catch (error) {
+          console.error('Failed to create conversation:', error);
+          // Show error message to user
+          const errorMessages: ChatMessage[] = [...updatedMessages, { 
+            role: 'assistant', 
+            content: 'Sorry, there was an error creating a new conversation. Please try again.' 
+          } as ChatMessage];
+          setChatMessages(errorMessages);
+          setIsLoading(false);
+          return;
         }
       }
 
