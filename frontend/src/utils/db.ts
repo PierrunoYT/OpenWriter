@@ -1,286 +1,140 @@
 'use client';
 
-// Conditional imports for server-side only
-let fs: any;
-let path: any;
-let dataDir: string;
-let conversationsPath: string;
-let messagesPath: string;
+// In-memory storage for conversations and messages
+let conversations: any[] = [];
+let messages: { [conversationId: number]: any[] } = {};
 
-// Setup for server-side (Node.js environment)
-if (typeof window === 'undefined') {
-  fs = require('fs');
-  path = require('path');
-
-  // Ensure the data directory exists
-  dataDir = path.join(process.cwd(), 'data');
-  if (!fs.existsSync(dataDir)) {
+// Helper function to read data from localStorage
+function readFromStorage(key: string): any {
+  if (typeof window !== 'undefined') {
     try {
-      fs.mkdirSync(dataDir, { recursive: true });
-      console.log(`Created data directory at: ${dataDir}`);
-    } catch (err) {
-      console.error(`Failed to create data directory: ${err}`);
-    }
-  }
-
-  // File-based storage paths
-  conversationsPath = path.join(dataDir, 'conversations.json');
-  messagesPath = path.join(dataDir, 'messages.json');
-
-  // Initialize storage if it doesn't exist
-  if (!fs.existsSync(conversationsPath)) {
-    fs.writeFileSync(conversationsPath, JSON.stringify([]));
-  }
-
-  if (!fs.existsSync(messagesPath)) {
-    fs.writeFileSync(messagesPath, JSON.stringify([]));
-  }
-}
-
-// Helper function to read JSON data with retry logic
-function readData(filePath: string): any[] {
-  // Server-side implementation
-  if (typeof window === 'undefined') {
-    let retries = 3;
-    let lastError;
-    
-    while (retries > 0) {
-      try {
-        const data = fs.readFileSync(filePath, 'utf8');
-        return JSON.parse(data);
-      } catch (error) {
-        lastError = error;
-        console.error(`Error reading data from ${filePath}, retries left: ${retries}:`, error);
-        retries--;
-        // Small delay before retry
-        if (retries > 0) {
-          const delay = Math.floor(Math.random() * 100) + 50; // 50-150ms
-          Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, delay);
-        }
-      }
-    }
-    console.error(`Failed to read data after multiple attempts:`, lastError);
-    return [];
-  } 
-  // Client-side implementation using localStorage
-  else {
-    try {
-      const key = filePath.includes('conversations.json') ? 'conversations' : 
-                 filePath.includes('messages.json') ? 'messages' : 
-                 filePath; // fallback to using the path as key
       const data = localStorage.getItem(key);
-      return data ? JSON.parse(data) : [];
+      return data ? JSON.parse(data) : null;
     } catch (error) {
-      console.error(`Error reading data from localStorage:`, error);
-      return [];
+      console.error(`Error reading from localStorage:`, error);
+      return null;
     }
   }
+  return null;
 }
 
-// Helper function to write JSON data with locking mechanism
-function writeData(filePath: string, data: any): void {
-  // Server-side implementation
-  if (typeof window === 'undefined') {
-    let retries = 3;
-    let lastError;
-    
-    while (retries > 0) {
-      try {
-        // Create a temporary file first
-        const tempPath = `${filePath}.tmp`;
-        fs.writeFileSync(tempPath, JSON.stringify(data, null, 2));
-        
-        // Atomically rename the temp file to the target file
-        // This helps prevent corruption if the process is interrupted
-        fs.renameSync(tempPath, filePath);
-        return;
-      } catch (error) {
-        lastError = error;
-        console.error(`Error writing data to ${filePath}, retries left: ${retries}:`, error);
-        retries--;
-        // Small delay before retry
-        if (retries > 0) {
-          const delay = Math.floor(Math.random() * 100) + 50; // 50-150ms
-          Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, delay);
-        }
-      }
-    }
-    console.error(`Failed to write data after multiple attempts:`, lastError);
-  } 
-  // Client-side implementation using localStorage
-  else {
+// Helper function to write data to localStorage
+function writeToStorage(key: string, data: any): void {
+  if (typeof window !== 'undefined') {
     try {
-      const key = filePath.includes('conversations.json') ? 'conversations' : 
-                 filePath.includes('messages.json') ? 'messages' : 
-                 filePath; // fallback to using the path as key
       localStorage.setItem(key, JSON.stringify(data));
     } catch (error) {
-      console.error(`Error writing data to localStorage:`, error);
+      console.error(`Error writing to localStorage:`, error);
     }
   }
 }
 
-// Database operations for conversations
-export const conversationsDb = {
-  // Create a new conversation
-  create: (title: string, model: string, systemPrompt: string) => {
-    const timestamp = Date.now();
-    const conversations = readData(conversationsPath || 'conversations');
-    
-    // Generate a new ID (simulate auto-increment)
-    const maxId = conversations.length > 0 
-      ? Math.max(...conversations.map((c: any) => c.id))
-      : 0;
-    const newId = maxId + 1;
-    
+// Initialize data from localStorage if available
+if (typeof window !== 'undefined') {
+  // Load conversations
+  const storedConversations = readFromStorage('conversations');
+  if (storedConversations) {
+    conversations = storedConversations;
+  }
+  
+  // Load messages
+  const storedMessages = readFromStorage('messages');
+  if (storedMessages) {
+    messages = storedMessages;
+  }
+}
+
+// Conversations API
+const conversationsAPI = {
+  getAll: () => {
+    return conversations;
+  },
+  
+  get: (id: number) => {
+    return conversations.find(c => c.id === id);
+  },
+  
+  create: (title: string, model: string = 'default', systemPrompt: string = '') => {
+    const id = conversations.length > 0 
+      ? Math.max(...conversations.map(c => c.id)) + 1 
+      : 1;
+      
     const newConversation = {
-      id: newId,
+      id,
       title,
-      created_at: timestamp,
-      updated_at: timestamp,
       model,
-      system_prompt: systemPrompt
+      system_prompt: systemPrompt,
+      created_at: new Date().toISOString()
     };
     
     conversations.push(newConversation);
-    writeData(conversationsPath || 'conversations', conversations);
+    writeToStorage('conversations', conversations);
     
-    return newId;
+    return id;
   },
   
-  // Get all conversations
-  getAll: () => {
-    const conversations = readData(conversationsPath || 'conversations');
-    // Sort by updated_at descending
-    return conversations.sort((a: any, b: any) => b.updated_at - a.updated_at);
-  },
-  
-  // Get a conversation by ID
-  get: (id: number) => {
-    const conversations = readData(conversationsPath || 'conversations');
-    return conversations.find((c: any) => c.id === id);
-  },
-  
-  // Update a conversation
-  update: (id: number, data: {title?: string, model?: string, systemPrompt?: string}) => {
-    const conversations = readData(conversationsPath || 'conversations');
-    const timestamp = Date.now();
-    
-    const index = conversations.findIndex((c: any) => c.id === id);
+  update: (id: number, data: any) => {
+    const index = conversations.findIndex(c => c.id === id);
     if (index === -1) return false;
     
-    if (data.title !== undefined) {
-      conversations[index].title = data.title;
-    }
+    conversations[index] = { ...conversations[index], ...data };
+    writeToStorage('conversations', conversations);
     
-    if (data.model !== undefined) {
-      conversations[index].model = data.model;
-    }
-    
-    if (data.systemPrompt !== undefined) {
-      conversations[index].system_prompt = data.systemPrompt;
-    }
-    
-    conversations[index].updated_at = timestamp;
-    
-    writeData(conversationsPath || 'conversations', conversations);
     return true;
   },
   
-  // Delete a conversation
   delete: (id: number) => {
-    const conversations = readData(conversationsPath || 'conversations');
-    const filteredConversations = conversations.filter((c: any) => c.id !== id);
+    const index = conversations.findIndex(c => c.id === id);
+    if (index === -1) return false;
     
-    if (filteredConversations.length === conversations.length) {
-      return false; // No conversation was deleted
-    }
+    conversations.splice(index, 1);
+    delete messages[id];
     
-    writeData(conversationsPath || 'conversations', filteredConversations);
-    
-    // Also delete associated messages
-    const messages = readData(messagesPath || 'messages');
-    const filteredMessages = messages.filter((m: any) => m.conversation_id !== id);
-    writeData(messagesPath || 'messages', filteredMessages);
+    writeToStorage('conversations', conversations);
+    writeToStorage('messages', messages);
     
     return true;
   },
   
-  // Delete all conversations
   deleteAll: () => {
-    writeData(conversationsPath || 'conversations', []);
-    writeData(messagesPath || 'messages', []); // Also clear all messages
+    conversations = [];
+    messages = {};
+    
+    writeToStorage('conversations', []);
+    writeToStorage('messages', {});
+    
     return true;
   }
 };
 
-// Database operations for messages
-export const messagesDb = {
-  // Add a new message to a conversation
+// Messages API
+const messagesAPI = {
+  getByConversation: (conversationId: number) => {
+    return messages[conversationId] || [];
+  },
+  
   add: (conversationId: number, role: string, content: string) => {
-    const timestamp = Date.now();
-    
-    // Debug log for message addition
-    console.log(`Adding message to conversation ${conversationId} with role ${role}`);
-    
-    // Update the conversation's updated_at timestamp
-    const conversations = readData(conversationsPath || 'conversations');
-    const conversationIndex = conversations.findIndex((c: any) => c.id === conversationId);
-    
-    if (conversationIndex !== -1) {
-      conversations[conversationIndex].updated_at = timestamp;
-      writeData(conversationsPath || 'conversations', conversations);
-    } else {
-      console.error(`Attempted to add message to non-existent conversation: ${conversationId}`);
-      return false;
+    if (!messages[conversationId]) {
+      messages[conversationId] = [];
     }
     
-    // Add new message
-    const messages = readData(messagesPath || 'messages');
-    
-    // Generate a new ID (simulate auto-increment)
-    const maxId = messages.length > 0 
-      ? Math.max(...messages.map((m: any) => m.id))
-      : 0;
-    const newId = maxId + 1;
-    
     const newMessage = {
-      id: newId,
+      id: Date.now(),
       conversation_id: conversationId,
       role,
       content,
-      created_at: timestamp
+      created_at: new Date().toISOString()
     };
     
-    console.log(`Created new message with ID ${newId} for conversation ${conversationId}`);
+    messages[conversationId].push(newMessage);
+    writeToStorage('messages', messages);
     
-    messages.push(newMessage);
-    writeData(messagesPath || 'messages', messages);
-    
-    return { lastInsertRowid: newId };
-  },
-  
-  // Get all messages for a conversation
-  getByConversation: (conversationId: number) => {
-    const messages = readData(messagesPath || 'messages');
-    console.log(`Reading messages for conversation ${conversationId}. Total messages in DB: ${messages.length}`);
-    
-    const conversationMessages = messages
-      .filter((m: any) => {
-        // Debug information about each message
-        console.log(`Message ID: ${m.id}, Conversation ID: ${m.conversation_id}, Role: ${m.role}, 
-          Matches current conversation: ${m.conversation_id === conversationId}`);
-        return m.conversation_id === conversationId;
-      })
-      .sort((a: any, b: any) => a.created_at - b.created_at); // Sort by created_at ascending
-      
-    console.log(`Found ${conversationMessages.length} messages for conversation ${conversationId}`);
-    return conversationMessages;
+    return { lastInsertRowid: newMessage.id };
   }
 };
 
-// No need for open/close database functions with file-based storage
+// Export the database API
 export default {
-  conversations: conversationsDb,
-  messages: messagesDb
+  conversations: conversationsAPI,
+  messages: messagesAPI
 };

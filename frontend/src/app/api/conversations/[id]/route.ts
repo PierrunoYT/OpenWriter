@@ -38,14 +38,19 @@ export async function PUT(
       return NextResponse.json({ error: 'Invalid conversation ID' }, { status: 400 });
     }
     
-    const data = await request.json();
-    const result = db.conversations.update(id, data);
+    const { title, model, systemPrompt } = await request.json();
+    const result = db.conversations.update(id, {
+      title,
+      model,
+      system_prompt: systemPrompt
+    });
     
     if (!result) {
       return NextResponse.json({ error: 'Conversation not found' }, { status: 404 });
     }
     
-    return NextResponse.json({ success: true });
+    const conversation = db.conversations.get(id);
+    return NextResponse.json({ conversation });
   } catch (error) {
     console.error('Error updating conversation:', error);
     return NextResponse.json({ error: 'Failed to update conversation' }, { status: 500 });

@@ -17,14 +17,14 @@ export async function POST(request: NextRequest) {
   try {
     const { title, model, systemPrompt } = await request.json();
     
-    if (!title || !model) {
-      return NextResponse.json({ error: 'Title and model are required' }, { status: 400 });
+    if (!title) {
+      return NextResponse.json({ error: 'Title is required' }, { status: 400 });
     }
     
-    const conversationId = db.conversations.create(title, model, systemPrompt || '');
+    const conversationId = db.conversations.create(title, model || 'default', systemPrompt || '');
     const conversation = db.conversations.get(conversationId);
     
-    return NextResponse.json({ id: conversationId, conversation });
+    return NextResponse.json({ id: conversationId, ...conversation });
   } catch (error) {
     console.error('Error creating conversation:', error);
     return NextResponse.json({ error: 'Failed to create conversation' }, { status: 500 });

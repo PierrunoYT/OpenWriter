@@ -47,9 +47,6 @@ export async function POST(
     
     const result = db.messages.add(id, role, content);
     
-    // Update the conversation's timestamp by passing title to trigger an update
-    db.conversations.update(id, { title: conversation.title });
-    
     if (!result) {
       return NextResponse.json({ error: 'Failed to add message' }, { status: 500 });
     }
