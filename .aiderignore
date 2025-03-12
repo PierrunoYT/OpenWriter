@@ -1,36 +1,46 @@
-# Node modules
+# Dependencies
 node_modules/
+.pnp
+.pnp.js
 
-# Build directories
+# Testing
+coverage/
+
+# Next.js
 .next/
-dist/
+out/
 build/
+dist/
 
-# Environment files
-.env
-.env.local
-.env.development
-.env.test
-.env.production
+# Production
+build/
+dist/
 
-# Log files
-*.log
+# Debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+.pnpm-debug.log*
+
+# Local env files
+.env
+.env*.local
+
+# Database
+*.db
+*.db-journal
+/backend/data/
+
+# Misc
+.DS_Store
+*.pem
+Thumbs.db
 
 # Editor directories and files
 .idea/
 .vscode/
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-
-# OS files
-.DS_Store
-Thumbs.db
+*.swp
+*.swo
 
 # Package files
 package-lock.json
@@ -39,9 +49,6 @@ yarn.lock
 # Common large files
 *.min.js
 *.min.css
-
-# Test coverage
-coverage/
 
 # Temporary files
 *.tmp
