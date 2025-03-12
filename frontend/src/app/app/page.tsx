@@ -34,6 +34,15 @@ export default function EditorPage() {
   const [aiResponse, setAiResponse] = useState<string>('');
   const [selectedText, setSelectedText] = useState<string>('');
   const [selectionRange, setSelectionRange] = useState<{start: number, end: number} | null>(null);
+  
+  // Use localStorage to persist selected text
+  useEffect(() => {
+    // Load any saved selection on component mount
+    const savedSelection = localStorage.getItem('savedSelectedText');
+    if (savedSelection) {
+      setSelectedText(savedSelection);
+    }
+  }, []);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [selectedModel, setSelectedModel] = useState<string>('anthropic/claude-3.7-sonnet');
   const [enableCaching, setEnableCaching] = useState<boolean>(true);
@@ -189,14 +198,20 @@ export default function EditorPage() {
         // Always use selected text if available and the selection flag is set
         const useSelectedText = localStorage.getItem('useSelectedText') === 'true';
         
+        // Get the selected text from state or localStorage
+        const textToUse = useSelectedText ? 
+          (selectedText.trim() || localStorage.getItem('savedSelectedText') || '') : 
+          editorContent.trim();
+        
         // Include selected text or full editor content in the system prompt for context
         const messagesForAPI = [
           { role: 'system', content: systemPrompt + 
-            (useSelectedText && selectedText.trim() ? 
-              "\n\nThe user has selected the following text in their editor:\n\n" + selectedText : 
-              editorContent.trim() ? 
-                "\n\nThe user has the following text in their editor:\n\n" + editorContent : 
-                "")
+            (textToUse ? 
+              (useSelectedText ? 
+                "\n\nThe user has selected the following text in their editor:\n\n" : 
+                "\n\nThe user has the following text in their editor:\n\n") + 
+              textToUse : 
+              "")
           },
           ...updatedMessages // Include conversation history
         ];
@@ -316,6 +331,7 @@ export default function EditorPage() {
         // Clear the selection flag after the request is complete
         if (localStorage.getItem('useSelectedText') === 'true') {
           localStorage.removeItem('useSelectedText');
+          // Don't remove the saved selection text yet, in case they want to use it again
         }
       }
     } catch (error) {
@@ -815,11 +831,14 @@ export default function EditorPage() {
                     onSelect={(e) => {
                       const target = e.target as HTMLTextAreaElement;
                       const selectedText = editorContent.substring(target.selectionStart, target.selectionEnd);
-                      setSelectedText(selectedText);
-                      setSelectionRange({
-                        start: target.selectionStart,
-                        end: target.selectionEnd
-                      });
+                      if (selectedText.trim()) {
+                        setSelectedText(selectedText);
+                        localStorage.setItem('savedSelectedText', selectedText);
+                        setSelectionRange({
+                          start: target.selectionStart,
+                          end: target.selectionEnd
+                        });
+                      }
                     }}
                   ></textarea>
                 </div>

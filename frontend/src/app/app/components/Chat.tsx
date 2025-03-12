@@ -177,7 +177,7 @@ export default function Chat({
 
       <div className="border-t border-slate-200 dark:border-slate-700 p-3">
         <div className="flex items-center gap-2 mb-2">
-          {selectedText && (
+          {(selectedText || localStorage.getItem('savedSelectedText')) && (
             <button
               onClick={() => {
                 // Toggle the selection state
