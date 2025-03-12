@@ -800,7 +800,7 @@ export default function EditorPage() {
                 <div className="p-4 h-full">
                   <textarea
                     className="w-full h-full p-3 bg-transparent focus:outline-none resize-none"
-                    placeholder="Start writing here..."
+                    placeholder="Start writing here or paste your text to analyze, edit, or improve..."
                     value={editorContent}
                     onChange={(e) => setEditorContent(e.target.value)}
                     onSelect={(e) => {
@@ -862,7 +862,7 @@ export default function EditorPage() {
             </a>
           </span>
           <span className="mx-2">•</span>
-          <span>Split Editor/Chat Mode</span>
+          <span>AI Writing Assistant</span>
           <span className="mx-2">•</span>
           <span>{new Date().getFullYear()} OpenWriter</span>
         </p>

@@ -141,7 +141,13 @@ export default function Chat({
             <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="mb-4 opacity-50">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
             </svg>
-            <p className="text-center font-light">Start a new conversation with the AI assistant...</p>
+            <p className="text-center font-light mb-2">I'm here to assist you with your writing.</p>
+            <ul className="text-center text-xs space-y-1 max-w-xs">
+              <li>• Type in the editor on the left, then ask me about your text</li>
+              <li>• Select text to analyze specific sections</li>
+              <li>• Ask me to improve, summarize, or expand your writing</li>
+              <li>• Use the "Replace Selection" button to update your text</li>
+            </ul>
           </div>
         )}
       </div>
@@ -184,7 +190,7 @@ export default function Chat({
           <input
             type="text"
             className="flex-1 p-3 pr-12 border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
-            placeholder="Ask about your text..."
+            placeholder="Ask me to analyze, improve, or rewrite your text..."
             value={content}
             onChange={(e) => setContent(e.target.value)}
             onKeyDown={(e) => {
