@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useTheme } from '@/app/providers';
+import { useTheme } from '../../../utils/ThemeContext';
 import Chat from './components/Chat';
 import Header from '../../components/layout/Header';
 import Sidebar from '../../components/layout/Sidebar';
