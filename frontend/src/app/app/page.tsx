@@ -744,33 +744,37 @@ export default function EditorPage() {
         )}
 
         
+        {/* App Controls in Header */}
+        <div className="px-4 py-2 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+          <AppControls
+            models={models}
+            selectedModel={selectedModel}
+            setSelectedModel={setSelectedModel}
+            loadingModels={loadingModels}
+            setUseStructuredOutput={setUseStructuredOutput}
+            showSystemPrompt={showSystemPrompt}
+            setShowSystemPrompt={setShowSystemPrompt}
+            enableCaching={enableCaching}
+            setEnableCaching={setEnableCaching}
+            useStructuredOutput={useStructuredOutput}
+            outputFormat={outputFormat}
+            setOutputFormat={setOutputFormat}
+            handleGenerateContent={handleGenerateContent}
+            isLoading={isLoading}
+            content={content}
+            outputFormats={outputFormats}
+            systemPrompt={systemPrompt}
+            setSystemPrompt={setSystemPrompt}
+            selectedPromptId={selectedPromptId}
+            setSelectedPromptId={setSelectedPromptId}
+            presetSystemPrompts={presetSystemPrompts}
+          />
+        </div>
+
         {/* Main Content Area */}
         <main className={`flex-1 overflow-hidden p-4 ${showSidebar ? 'ml-0' : ''} flex flex-row h-full`}>
           {/* Left side - Editor area */}
-          <div className="flex-1 overflow-hidden h-full flex flex-col mr-4">
-            <AppControls
-              models={models}
-              selectedModel={selectedModel}
-              setSelectedModel={setSelectedModel}
-              loadingModels={loadingModels}
-              setUseStructuredOutput={setUseStructuredOutput}
-              showSystemPrompt={showSystemPrompt}
-              setShowSystemPrompt={setShowSystemPrompt}
-              enableCaching={enableCaching}
-              setEnableCaching={setEnableCaching}
-              useStructuredOutput={useStructuredOutput}
-              outputFormat={outputFormat}
-              setOutputFormat={setOutputFormat}
-              handleGenerateContent={handleGenerateContent}
-              isLoading={isLoading}
-              content={content}
-              outputFormats={outputFormats}
-              systemPrompt={systemPrompt}
-              setSystemPrompt={setSystemPrompt}
-              selectedPromptId={selectedPromptId}
-              setSelectedPromptId={setSelectedPromptId}
-              presetSystemPrompts={presetSystemPrompts}
-            />
+          <div className="w-1/2 overflow-hidden h-full flex flex-col mr-4">
             
             <div className="flex-1 overflow-hidden mt-4 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
               <div className="p-4 h-full">
@@ -785,7 +789,7 @@ export default function EditorPage() {
           </div>
           
           {/* Right side - Chat area */}
-          <div className="w-2/5 overflow-hidden h-full">
+          <div className="w-1/2 overflow-hidden h-full">
             <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm overflow-hidden border border-slate-200 dark:border-slate-700 h-full">
               <Chat
                 content={content}
@@ -813,7 +817,7 @@ export default function EditorPage() {
       
       {/* Footer */}
       <footer className={`py-2 text-center text-xs ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'} border-t ${theme === 'dark' ? 'border-slate-700' : 'border-slate-200'} flex-shrink-0`}>
-        <p>Powered by OpenRouter • Using {selectedModel} • Editor + Chat Mode</p>
+        <p>Powered by OpenRouter • Split Editor/Chat Mode</p>
       </footer>
     </div>
   );
