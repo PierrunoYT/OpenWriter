@@ -28,7 +28,7 @@ export default function Sidebar({
             setCurrentConversation(null);
             setChatMessages([]);
           }}
-          className="w-full px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg flex items-center justify-center gap-2 transition-colors"
+          className="w-full px-4 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-lg flex items-center justify-center gap-2 transition-all duration-200 shadow-sm hover:shadow font-medium"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -40,19 +40,22 @@ export default function Sidebar({
 
       {/* Conversations List */}
       <div className="flex-1 overflow-y-auto">
+        <div className="px-4 py-2 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+          Conversations
+        </div>
         {conversations.length > 0 ? (
           <div className="space-y-1 p-2">
             {conversations.map((conv) => (
               <div
                 key={conv.id}
-                className={`group flex items-center gap-2 p-2 rounded-lg cursor-pointer ${
+                className={`group flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-all duration-200 ${
                   currentConversation === conv.id
-                    ? 'bg-slate-100 dark:bg-slate-700'
-                    : 'hover:bg-slate-50 dark:hover:bg-slate-700/50'
+                    ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-l-2 border-blue-500 dark:border-blue-400'
+                    : 'hover:bg-slate-50 dark:hover:bg-slate-700/50 border-l-2 border-transparent'
                 }`}
               >
                 {/* Chat icon */}
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-70">
                   <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                 </svg>
 
@@ -70,7 +73,7 @@ export default function Sidebar({
                     e.stopPropagation();
                     deleteConversation(conv.id);
                   }}
-                  className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-100 dark:hover:bg-red-900/30 rounded"
+                  className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-opacity"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-500">
                     <path d="M3 6h18"></path>
@@ -82,7 +85,7 @@ export default function Sidebar({
             ))}
           </div>
         ) : (
-          <div className="text-center p-4 text-slate-400 dark:text-slate-500">
+          <div className="text-center p-4 text-slate-400 dark:text-slate-500 italic">
             No conversations yet
           </div>
         )}
