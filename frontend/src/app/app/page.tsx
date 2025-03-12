@@ -35,7 +35,7 @@ export default function EditorPage() {
   const [chatInput, setChatInput] = useState<string>('');
   const [aiResponse, setAiResponse] = useState<string>('');
   const editorRef = useRef<HTMLTextAreaElement>(null);
-  const { setSelection, clearSelection, selectionRange } = useSelection();
+  const { setSelection, clearSelection, selectionRange, isSelectionActive } = useSelection();
   
   // Selection handling functions
   const handleTextSelection = (e: React.SyntheticEvent) => {
