@@ -11,6 +11,8 @@ interface SelectionContextType {
   setSelection: (text: string, range: { start: number; end: number } | null, source?: 'editor' | 'other') => void;
   clearSelection: () => void;
   toggleSelectionUse: () => void;
+  hasVisualIndicator: boolean;
+  setHasVisualIndicator: (value: boolean) => void;
 }
 
 const SelectionContext = createContext<SelectionContextType>({
@@ -22,6 +24,8 @@ const SelectionContext = createContext<SelectionContextType>({
   setSelection: () => {},
   clearSelection: () => {},
   toggleSelectionUse: () => {},
+  hasVisualIndicator: false,
+  setHasVisualIndicator: () => {},
 });
 
 export const SelectionProvider = ({ children }: { children: React.ReactNode }) => {
@@ -30,6 +34,7 @@ export const SelectionProvider = ({ children }: { children: React.ReactNode }) =
   const [selectionRange, setSelectionRange] = useState<{ start: number; end: number } | null>(null);
   const [selectionTimestamp, setSelectionTimestamp] = useState<number>(0);
   const [selectionSource, setSelectionSource] = useState<'editor' | 'other' | null>(null);
+  const [hasVisualIndicator, setHasVisualIndicator] = useState(false);
 
   // Initialize from localStorage on mount
   useEffect(() => {
@@ -41,6 +46,7 @@ export const SelectionProvider = ({ children }: { children: React.ReactNode }) =
       if (savedText && isActive) {
         setSelectedText(savedText);
         setIsSelectionActive(true);
+        setHasVisualIndicator(true);
         
         // Try to parse the saved range if it exists
         if (savedRange) {
@@ -69,12 +75,14 @@ export const SelectionProvider = ({ children }: { children: React.ReactNode }) =
         setSelectedText(text);
         setSelectionRange(range);
         setIsSelectionActive(true);
+        setHasVisualIndicator(true);
         setSelectionTimestamp(Date.now());
         setSelectionSource('editor');
         
         // Save selection range to localStorage
         if (typeof window !== 'undefined' && range) {
           localStorage.setItem('savedSelectionRange', JSON.stringify(range));
+          localStorage.setItem('savedSelectedText', text);
         }
       }
     };
@@ -93,15 +101,36 @@ export const SelectionProvider = ({ children }: { children: React.ReactNode }) =
   }, []);
 
   const setSelection = (text: string, range: { start: number; end: number } | null, source: 'editor' | 'other' = 'editor') => {
+    if (!text) {
+      clearSelection();
+      return;
+    }
+    
     setSelectedText(text);
     setSelectionRange(range);
     setIsSelectionActive(!!text);
+    setHasVisualIndicator(!!text);
     setSelectionTimestamp(Date.now());
     setSelectionSource(source);
     
-    // Save selection range to localStorage if available
-    if (typeof window !== 'undefined' && range) {
-      localStorage.setItem('savedSelectionRange', JSON.stringify(range));
+    // Save selection data to localStorage
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('savedSelectedText', text);
+      if (range) {
+        localStorage.setItem('savedSelectionRange', JSON.stringify(range));
+      }
+      // Automatically set useSelectedText to true when selection is made
+      localStorage.setItem('useSelectedText', 'true');
+      
+      // Dispatch a custom event to notify other components
+      const event = new CustomEvent('selectionChanged', {
+        detail: {
+          text,
+          range,
+          isActive: true
+        }
+      });
+      document.dispatchEvent(event);
     }
   };
 
@@ -109,6 +138,7 @@ export const SelectionProvider = ({ children }: { children: React.ReactNode }) =
     setSelectedText('');
     setSelectionRange(null);
     setIsSelectionActive(false);
+    setHasVisualIndicator(false);
     setSelectionTimestamp(0);
     setSelectionSource(null);
     
@@ -116,7 +146,11 @@ export const SelectionProvider = ({ children }: { children: React.ReactNode }) =
     if (typeof window !== 'undefined') {
       localStorage.removeItem('useSelectedText');
       localStorage.removeItem('savedSelectionRange');
-      // Don't remove savedSelectedText here to allow for recovery
+      localStorage.removeItem('savedSelectedText');
+      
+      // Dispatch a custom event to notify other components
+      const event = new CustomEvent('selectionCleared');
+      document.dispatchEvent(event);
     }
   };
   
@@ -127,9 +161,11 @@ export const SelectionProvider = ({ children }: { children: React.ReactNode }) =
       if (isCurrentlyActive) {
         localStorage.removeItem('useSelectedText');
         setIsSelectionActive(false);
+        setHasVisualIndicator(false);
       } else if (selectedText) {
         localStorage.setItem('useSelectedText', 'true');
         setIsSelectionActive(true);
+        setHasVisualIndicator(true);
       }
       
       // Dispatch a custom event to notify other components
@@ -153,6 +189,8 @@ export const SelectionProvider = ({ children }: { children: React.ReactNode }) =
         setSelection,
         clearSelection,
         toggleSelectionUse,
+        hasVisualIndicator,
+        setHasVisualIndicator,
       }}
     >
       {children}

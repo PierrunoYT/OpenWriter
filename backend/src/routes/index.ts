@@ -22,17 +22,27 @@ router.get('/', (req, res) => {
 
 // Health check endpoint
 router.get('/health', (req, res) => {
-  res.status(200).json({ 
-    status: 'ok', 
-    message: 'Server is running',
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development',
-    services: {
-      openrouter: process.env.OPENROUTER_API_KEY ? 'configured' : 'missing-api-key',
-      database: 'in-memory'
-    },
-    version: pkg.version
-  });
+  try {
+    const healthCheckResponse = {
+      status: 'ok',
+      message: 'Server is running',
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV || 'development',
+      services: {
+        openrouter: process.env.OPENROUTER_API_KEY ? 'configured' : 'missing-api-key',
+        database: 'in-memory'
+      },
+      version: pkg.version
+    };
+    res.status(200).json(healthCheckResponse);
+  } catch (error) {
+    console.error('Health check failed:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Health check failed',
+      timestamp: new Date().toISOString()
+    });
+  }
 });
 
 export default router;
