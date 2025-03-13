@@ -1,5 +1,4 @@
 import express from 'express';
-import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
 
@@ -12,22 +11,6 @@ const app = express();
 // Middleware
 app.use(cors());
 app.use(express.json());
-
-// Connect to MongoDB
-const MONGODB_URI = process.env.MONGODB_URI;
-if (!MONGODB_URI) {
-  console.error('MONGODB_URI is not defined in the environment variables');
-  process.exit(1);
-}
-
-mongoose.connect(MONGODB_URI)
-  .then(() => {
-    console.log('Connected to MongoDB');
-  })
-  .catch((error: Error) => {
-    console.error('Error connecting to MongoDB:', error);
-    process.exit(1);
-  });
 
 // Routes
 app.get('/', (req, res) => {
