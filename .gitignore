@@ -36,6 +36,7 @@ yarn-error.log*
 .DS_Store
 *.pem
 Thumbs.db
+feature_ideas.md
 
 # Editor directories and files
 .idea/
