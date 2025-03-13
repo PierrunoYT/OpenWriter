@@ -33,6 +33,10 @@ html.dark .dark\:bg-slate-800 {
   background-color: rgb(30 41 59) !important;
 }
 
+html.dark .dark\:bg-slate-800\/95 {
+  background-color: rgba(30, 41, 59, 0.95) !important;
+}
+
 html.dark .dark\:bg-slate-900 {
   background-color: rgb(15 23 42) !important;
 }
@@ -74,6 +78,14 @@ html.dark,
 
 .theme-dark .bg-slate-800 {
   background-color: rgb(30 41 59) !important;
+}
+
+.theme-dark .bg-white\/95 {
+  background-color: rgba(10, 10, 10, 0.95) !important;
+}
+
+.theme-dark .dark\:bg-slate-800\/95 {
+  background-color: rgba(30, 41, 59, 0.95) !important;
 }
 
 .theme-dark .bg-slate-900,
