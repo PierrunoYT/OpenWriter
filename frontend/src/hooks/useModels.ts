@@ -19,44 +19,42 @@ export default function useModels({ API_BASE_URL }: UseModelsProps) {
     
     // Add timeout to prevent hanging on slow API
     const timeoutId = setTimeout(() => {
-      if (loadingModels) {
-        console.log('Model loading timed out, using fallback models');
-        setLoadingModels(false);
-        
-        // Use fallback models
-        const fallbackModels = [
-          { 
-            id: 'anthropic/claude-3.7-sonnet', 
-            name: 'Claude 3.7 Sonnet', 
-            description: 'Latest Claude model with excellent capabilities',
-            context_length: 200000,
-            pricing: { prompt: 3.00, completion: 15.00 },
-            features: ['multimodal'],
-            supportsStructured: false
-          },
-          { 
-            id: 'anthropic/claude-3-haiku', 
-            name: 'Claude 3 Haiku', 
-            description: 'Fast and efficient Claude model',
-            context_length: 200000,
-            pricing: { prompt: 0.25, completion: 1.25 },
-            features: ['multimodal'],
-            supportsStructured: false
-          },
-          { 
-            id: 'openai/gpt-4o', 
-            name: 'GPT-4o', 
-            description: 'Latest OpenAI model with excellent capabilities',
-            context_length: 128000,
-            pricing: { prompt: 5.00, completion: 15.00 },
-            features: ['multimodal', 'json_object'],
-            supportsStructured: true
-          }
-        ];
-        
-        setModels(fallbackModels);
-        setSelectedModel('anthropic/claude-3.7-sonnet');
-      }
+      console.log('Model loading timed out, using fallback models');
+      setLoadingModels(false);
+      
+      // Use fallback models
+      const fallbackModels = [
+        { 
+          id: 'anthropic/claude-3.7-sonnet', 
+          name: 'Claude 3.7 Sonnet', 
+          description: 'Latest Claude model with excellent capabilities',
+          context_length: 200000,
+          pricing: { prompt: 3.00, completion: 15.00 },
+          features: ['multimodal'],
+          supportsStructured: false
+        },
+        { 
+          id: 'anthropic/claude-3-haiku', 
+          name: 'Claude 3 Haiku', 
+          description: 'Fast and efficient Claude model',
+          context_length: 200000,
+          pricing: { prompt: 0.25, completion: 1.25 },
+          features: ['multimodal'],
+          supportsStructured: false
+        },
+        { 
+          id: 'openai/gpt-4o', 
+          name: 'GPT-4o', 
+          description: 'Latest OpenAI model with excellent capabilities',
+          context_length: 128000,
+          pricing: { prompt: 5.00, completion: 15.00 },
+          features: ['multimodal', 'json_object'],
+          supportsStructured: true
+        }
+      ];
+      
+      setModels(fallbackModels);
+      setSelectedModel('anthropic/claude-3.7-sonnet');
     }, 5000); // 5 second timeout
     
     // Fetch models from OpenRouter

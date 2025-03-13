@@ -24,11 +24,6 @@ export interface Conversation {
   created_at?: string;
 }
 
-export interface SelectionRange {
-  start: number;
-  end: number;
-}
-
 export interface PresetSystemPrompt {
   id: string;
   name: string;

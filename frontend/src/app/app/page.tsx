@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useTheme } from '../../utils/ThemeContext';
-import { SelectionProvider } from '@/utils/selectionContext';
 import Chat from './components/Chat';
 import Header from '../../components/layout/Header';
 import Sidebar from '../../components/layout/Sidebar';
@@ -93,14 +92,13 @@ export default function EditorPage() {
     currentConversation
   });
   
-  // Sync chat messages between hooks
+  // Sync chat messages between hooks - but only in one direction to prevent infinite loops
   useEffect(() => {
-    setChatMessagesFromHook(chatMessages);
-  }, [chatMessages, setChatMessagesFromHook]);
-  
-  useEffect(() => {
-    setChatMessages(chatMessagesFromHook);
-  }, [chatMessagesFromHook, setChatMessages]);
+    // Only update if the arrays are different to prevent infinite loops
+    if (JSON.stringify(chatMessages) !== JSON.stringify(chatMessagesFromHook)) {
+      setChatMessagesFromHook(chatMessages);
+    }
+  }, [chatMessages, setChatMessagesFromHook, chatMessagesFromHook]);
   
   // Handle generating content
   const handleGenerateContent = async (): Promise<void> => {
@@ -115,10 +113,9 @@ export default function EditorPage() {
   };
 
   return (
-    <SelectionProvider>
-      <div 
-        className={`min-h-screen h-screen overflow-hidden flex flex-col bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 text-slate-800 dark:text-slate-100 ${theme === 'dark' ? 'theme-dark' : 'theme-light'}`}
-        data-theme={theme}>
+    <div 
+      className={`min-h-screen h-screen overflow-hidden flex flex-col bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 text-slate-800 dark:text-slate-100 ${theme === 'dark' ? 'theme-dark' : 'theme-light'}`}
+      data-theme={theme}>
       <Header 
         showSidebar={showSidebar}
         setShowSidebar={setShowSidebar}
@@ -233,7 +230,6 @@ export default function EditorPage() {
           <span>{new Date().getFullYear()} OpenWriter</span>
         </p>
       </footer>
-      </div>
-    </SelectionProvider>
+    </div>
   );
 } 
