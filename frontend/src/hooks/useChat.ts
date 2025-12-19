@@ -76,10 +76,7 @@ export default function useChat({
         const response = await fetch(`${API_BASE_URL}/chat/completions`, {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${process.env.NEXT_PUBLIC_OPENROUTER_API_KEY}`,
-            'HTTP-Referer': 'https://openwriter.app',
-            'X-Title': 'OpenWriter'
+            'Content-Type': 'application/json'
           },
           body: JSON.stringify({
             messages: messagesForAPI,
@@ -90,11 +87,21 @@ export default function useChat({
         });
         
         if (!response.ok) {
-          const errorData = await response.json();
+          let errorData;
+          try {
+            errorData = await response.json();
+          } catch {
+            errorData = { status: response.status, statusText: response.statusText };
+          }
           throw new ChatError('API request failed', errorData);
         }
         
-        const data = await response.json();
+        let data;
+        try {
+          data = await response.json();
+        } catch (parseError) {
+          throw new ChatError('Failed to parse API response', { error: String(parseError) });
+        }
         const assistantResponse = data.choices[0]?.message?.content || 'Sorry, I could not generate a response.';
         
         // Save the assistant's response if we have a conversation
@@ -174,10 +181,7 @@ export default function useChat({
         const response = await fetch(`${API_BASE_URL}/chat/completions`, {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${process.env.NEXT_PUBLIC_OPENROUTER_API_KEY}`,
-            'HTTP-Referer': 'https://openwriter.app',
-            'X-Title': 'OpenWriter'
+            'Content-Type': 'application/json'
           },
           body: JSON.stringify({
             messages: messagesForAPI,
@@ -188,11 +192,21 @@ export default function useChat({
         });
         
         if (!response.ok) {
-          const errorData = await response.json();
+          let errorData;
+          try {
+            errorData = await response.json();
+          } catch {
+            errorData = { status: response.status, statusText: response.statusText };
+          }
           throw new ChatError('API request failed', errorData);
         }
         
-        const data = await response.json();
+        let data;
+        try {
+          data = await response.json();
+        } catch (parseError) {
+          throw new ChatError('Failed to parse API response', { error: String(parseError) });
+        }
         const assistantResponse = data.choices[0]?.message?.content || 'Sorry, I could not generate a response.';
         
         // Save the messages if we have a conversation

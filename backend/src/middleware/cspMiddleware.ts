@@ -9,12 +9,12 @@ export const cspMiddleware = (req: Request, res: Response, next: NextFunction) =
     'Content-Security-Policy',
     [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      "script-src 'self'",
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob:",
       "font-src 'self'",
-      "connect-src 'self' https://openrouter.ai",
-      "frame-src 'self'",
+      "connect-src 'self'",
+      "frame-src 'none'",
       "media-src 'self'",
       "object-src 'none'",
       "base-uri 'self'"

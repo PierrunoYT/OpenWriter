@@ -9,8 +9,9 @@ const REQUIRED_ENV_VARS = ['OPENROUTER_API_KEY'];
 const missingVars = REQUIRED_ENV_VARS.filter(varName => !process.env[varName]);
 
 if (missingVars.length > 0) {
-  console.warn(`⚠️ Missing required environment variables: ${missingVars.join(', ')}`);
-  console.warn('Some functionality may not work correctly. Please check your .env file.');
+  console.error(`❌ Missing required environment variables: ${missingVars.join(', ')}`);
+  console.error('Please check your .env file and ensure all required variables are set.');
+  process.exit(1);
 }
 
 // Get port from environment or use default

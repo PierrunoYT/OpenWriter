@@ -115,6 +115,23 @@ router.post('/', checkCreditsMiddleware, async (req: Request, res: Response): Pr
       }
     }
     
+    // Validate message content length (prevent extremely large payloads)
+    if (messages && Array.isArray(messages)) {
+      const maxContentLength = 50000; // 50k characters per message
+      for (const msg of messages) {
+        if (msg.content && typeof msg.content === 'string' && msg.content.length > maxContentLength) {
+          res.status(400).json({
+            error: {
+              message: `Message content exceeds maximum length of ${maxContentLength} characters`,
+              code: 400,
+              type: 'bad_request'
+            }
+          });
+          return;
+        }
+      }
+    }
+    
     // Validate model
     if (!model) {
       res.status(400).json({

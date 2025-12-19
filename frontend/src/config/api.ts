@@ -2,8 +2,8 @@
  * API configuration for the application
  */
 
-// Base URL for the OpenRouter API
-export const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1';
+// Base URL for the backend API proxy (all requests go through backend for security)
+export const OPENROUTER_API_URL = '/api/ai';
 
 // Base URL for the backend API
 export const BACKEND_API_URL = 'http://localhost:3001';

@@ -102,7 +102,12 @@ export default function useConversation({
       setChatMessages([]);
       
       // Refresh conversations list
-      await fetchConversations();
+      try {
+        await fetchConversations();
+      } catch (fetchError) {
+        console.error('Error refreshing conversations after creation:', fetchError);
+        // Don't throw - conversation was already created successfully
+      }
       
       return newConversationId;
     } catch (error) {
